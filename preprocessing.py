@@ -1,11 +1,12 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 df = pd.read_csv("train.csv")
 
 # ====================== EXPLORATION ======================
 
 # print(df.shape)
-# print(df.columns)
+print(df.columns)
 # print(df.dtypes)
 # print(df.info())
 
@@ -249,4 +250,110 @@ missing_after_cleaning = missing_after_cleaning[
     missing_after_cleaning > 0
 ]
 
-print(missing_after_cleaning)
+# print(missing_after_cleaning)
+
+# ======================== CATEGORICAL CLEANUP ==================
+
+# Everything is clean no duplicated labels
+# print(df["Street"].unique())
+# print(df["Alley"].unique())
+# print(df["LotShape"].unique())
+# print(df["Utilities"].unique())
+# print(df["Neighborhood"].nunique())
+
+
+
+# ===================== OUTLIER ANALYSIS ======================
+
+# plt.scatter(df["GrLivArea"], df["SalePrice"])
+
+# plt.xlabel("GrLivArea")
+# plt.ylabel("SalePrice")
+# plt.title("GrLivArea vs SalePrice")
+
+# plt.show()
+
+
+# ========= IQR RULE ==========================
+# Q1 = 25th percentile
+# Q3 = 75th percentile
+
+# IQR = Q3 - Q1
+
+# Lower bound = Q1 - 1.5 * IQR
+# Upper bound = Q3 + 1.5 * IQR
+
+numerical_features = [
+    "LotFrontage",
+    "LotArea",
+    "MasVnrArea",
+    "BsmtUnfSF",
+    "TotalBsmtSF",
+    "GrLivArea",
+    "BedroomAbvGr",
+    "KitchenAbvGr",
+    "TotRmsAbvGrd",
+    "Fireplaces",
+    "GarageCars",
+    "GarageArea",
+    "WoodDeckSF",
+    "OpenPorchSF",
+    "PoolArea",
+    "MiscVal",
+    "SalePrice"
+]
+
+def detect_iqr_outlier(df, column):
+    q1 = df[column].quantile(0.25)
+    q3 = df[column].quantile(0.75)
+
+    iqr = q3 - q1
+
+    lower_bound = q1 - (1.5 * iqr)
+    upper_bound = q3 + (1.5 * iqr)
+
+    outliers = df[
+        (df[column] < lower_bound) | 
+        (df[column] > upper_bound)
+    ]
+    return outliers
+
+def detect_iqr_bounded_outlier(df, col):
+    q1 = df[col].quantile(0.25)
+    q3 = df[col].quantile(0.75)
+
+    iqr = q3 - q1
+
+    lower_bound = q1 - (1.5 * iqr)
+    upper_bound = q3 + (1.5 * iqr)
+
+    # print(f"lower outlier  for {col} --> {len(df[(df[col] < lower_bound)])}, upper outlier for {col} ---> {len(df[(df[col] > upper_bound)])}")
+
+    # finding skewness for all these cols
+    # print(f"{col} is skewed by: {df[col].skew()}")
+
+    # Skewness showed almost all have close to 0 skewness which is okay but pool, miscVal and lotArea are screaming. Pool and miscVal is fine because only a few have value but lotArea is creepy so let's figure it out
+    # print(df["LotArea"].describe()) ---> MAX is screeming so let's see how many rows are shit
+
+    # print(df[(df["LotArea"] > 50000)]) ----> 11 rows are poisoned
+
+    # let's see if they're really outliers or valid 
+    print(df.loc[
+    df["LotArea"] > 100000,
+    [
+        "LotArea",
+        "SalePrice",
+        "Neighborhood",
+        "BldgType",
+        "HouseStyle",
+        "OverallQual",
+        "OverallCond",
+        "GrLivArea",
+        "SaleCondition"
+    ]
+])
+ 
+for column in numerical_features:
+    outliers = detect_iqr_outlier(df, column)
+    detect_iqr_bounded_outlier(df, column)
+
