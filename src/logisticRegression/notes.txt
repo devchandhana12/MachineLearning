@@ -1,0 +1,763 @@
+LOGISTIC REGRESSION — WHY ODDS, LOG-ODDS & SIGMOID EXIST
+=========================================================
+
+
+1. THE ORIGINAL PROBLEM
+-----------------------
+
+We have a binary target:
+
+y = 1 → Pass
+y = 0 → Fail
+
+What we actually want to know is:
+
+P(Y = 1 | X)
+
+Example:
+
+Given a student's features,
+what is the probability that they pass?
+
+
+We already know the linear equation:
+
+z = wx + b
+
+or with multiple features:
+
+z = b + w1x1 + w2x2 + ... + wnxn
+
+
+PROBLEM:
+
+z can range from:
+
+-∞ → +∞
+
+But probability can only range from:
+
+0 → 1
+
+
+So we cannot directly treat:
+
+wx + b
+
+as probability.
+
+
+=========================================================
+
+2. START WITH PROBABILITY
+-------------------------
+
+Suppose:
+
+P(Pass) = 0.8
+
+Since there are only two possible outcomes:
+
+Pass OR Fail
+
+then:
+
+P(Fail) = 1 - P(Pass)
+
+Therefore:
+
+P(Fail) = 1 - 0.8
+        = 0.2
+
+
+Generally:
+
+P(Y = 1) = p
+
+P(Y = 0) = 1 - p
+
+
+=========================================================
+
+3. ODDS
+-------
+
+Instead of only asking:
+
+"What is the probability of class 1?"
+
+we can ask:
+
+"How likely is class 1 compared with class 0?"
+
+
+That comparison is called ODDS.
+
+
+Odds = P(class 1) / P(class 0)
+
+
+Since:
+
+P(class 1) = p
+
+and:
+
+P(class 0) = 1 - p
+
+
+Therefore:
+
+Odds = p / (1 - p)
+
+
+Example:
+
+p = 0.8
+
+Odds = 0.8 / 0.2
+     = 4
+
+
+Meaning:
+
+Class 1 is 4 times as likely as class 0.
+
+In our example:
+
+Pass : Fail
+  4  :  1
+
+
+Think:
+
+roughly 4 ones for every 1 zero
+among comparable cases.
+
+
+IMPORTANT:
+
+Odds = 4 DOES NOT mean 400% probability.
+
+Probability is still 80%.
+
+We're simply expressing the SAME information
+in a different form.
+
+
+=========================================================
+
+4. WHY CONVERT PROBABILITY INTO ODDS?
+-------------------------------------
+
+Probability has range:
+
+0 → 1
+
+
+Odds transform that into:
+
+0 → ∞
+
+
+Examples:
+
+p = 0.01
+
+odds = 0.01 / 0.99
+     ≈ 0.0101
+
+
+p = 0.5
+
+odds = 0.5 / 0.5
+     = 1
+
+
+p = 0.8
+
+odds = 0.8 / 0.2
+     = 4
+
+
+p = 0.99
+
+odds = 0.99 / 0.01
+     = 99
+
+
+So:
+
+Probability          Odds
+
+p → 0                odds → 0
+
+p = 0.5              odds = 1
+
+p → 1                odds → ∞
+
+
+Odds expanded:
+
+0 → 1
+
+into:
+
+0 → ∞
+
+
+BUT WE STILL HAVE A PROBLEM.
+
+
+=========================================================
+
+5. WHY ODDS ARE NOT ENOUGH
+--------------------------
+
+Our linear equation:
+
+z = wx + b
+
+can produce:
+
+-∞ → +∞
+
+
+But odds can only produce:
+
+0 → +∞
+
+
+Odds can NEVER be negative.
+
+
+Example:
+
+wx + b could be:
+
+-10
+-2
+0
+4
+20
+
+
+But odds could be:
+
+0.1
+0.5
+1
+4
+100
+
+Never:
+
+-1
+-5
+-100
+
+
+So odds only got us halfway.
+
+We need another transformation that converts:
+
+0 → ∞
+
+into:
+
+-∞ → +∞
+
+
+=========================================================
+
+6. LOG ENTERS
+-------------
+
+Take the logarithm of odds:
+
+
+log(Odds)
+
+
+Since:
+
+Odds = p / (1-p)
+
+
+we get:
+
+log(p / (1-p))
+
+
+This is called:
+
+LOG-ODDS
+
+or:
+
+LOGIT
+
+
+logit(p) = log(p / (1-p))
+
+
+=========================================================
+
+7. WHY LOG IS PERFECT
+---------------------
+
+CASE 1:
+
+p = 0.5
+
+
+Odds:
+
+0.5 / 0.5 = 1
+
+
+Log-odds:
+
+ln(1) = 0
+
+
+Therefore:
+
+50% probability
+      ↓
+odds = 1
+      ↓
+log-odds = 0
+
+
+Perfect midpoint.
+
+
+-------------------------
+
+
+CASE 2:
+
+p = 0.8
+
+
+Odds:
+
+0.8 / 0.2 = 4
+
+
+Log-odds:
+
+ln(4) ≈ +1.386
+
+
+Positive number.
+
+
+So:
+
+class 1 more likely
+      ↓
+odds > 1
+      ↓
+log-odds > 0
+
+
+-------------------------
+
+
+CASE 3:
+
+p = 0.2
+
+
+Odds:
+
+0.2 / 0.8 = 0.25
+
+
+Log-odds:
+
+ln(0.25) ≈ -1.386
+
+
+Negative number.
+
+
+So:
+
+class 0 more likely
+      ↓
+odds < 1
+      ↓
+log-odds < 0
+
+
+=========================================================
+
+8. LOOK AT WHAT LOG-ODDS ACHIEVED
+---------------------------------
+
+Probability       Odds        Log-Odds
+
+0.2               0.25        -1.386
+
+0.5               1            0
+
+0.8               4           +1.386
+
+
+So:
+
+
+Probability:
+
+0 → 1
+
+
+became Odds:
+
+0 → ∞
+
+
+which became Log-Odds:
+
+-∞ → +∞
+
+
+And NOW look at our linear equation:
+
+
+wx + b:
+
+-∞ → +∞
+
+
+THE RANGES FINALLY MATCH.
+
+
+=========================================================
+
+9. THE HEART OF LOGISTIC REGRESSION
+-----------------------------------
+
+Because log-odds and our linear score
+live in the same numerical world,
+we model:
+
+
+log(p / (1-p)) = wx + b
+
+
+Or with multiple features:
+
+
+log(p / (1-p))
+
+=
+
+b + w1x1 + w2x2 + ... + wnxn
+
+
+THIS is the fundamental Logistic Regression relationship.
+
+
+Meaning:
+
+The LOG-ODDS of class 1 are modeled
+as a linear combination of the features.
+
+
+=========================================================
+
+10. SO WHERE DOES SIGMOID COME FROM?
+------------------------------------
+
+This was the big confusion.
+
+
+It is NOT:
+
+"Odds didn't work, so we threw them away
+and invented sigmoid."
+
+
+NO.
+
+
+The actual story is:
+
+
+Probability
+    ↓
+Odds
+    ↓
+Log-Odds
+    ↓
+Linear world
+
+
+p
+    ↓
+p / (1-p)
+    ↓
+log(p / (1-p))
+    ↓
+wx + b
+
+
+We transformed probability until it could live
+in the same world as a linear equation.
+
+
+Now imagine the model calculates:
+
+z = wx + b
+
+
+Suppose:
+
+z = 1.386
+
+
+But z represents LOG-ODDS.
+
+
+Humans/model consumers usually want:
+
+Probability.
+
+
+So we need to travel BACKWARD.
+
+
+Linear score / Log-Odds
+        ↓
+undo log
+        ↓
+Odds
+        ↓
+undo odds representation
+        ↓
+Probability
+
+
+That reverse transformation is SIGMOID.
+
+
+=========================================================
+
+11. LOGIT AND SIGMOID ARE INVERSES
+----------------------------------
+
+LOGIT:
+
+Probability → Log-Odds
+
+
+logit(p) = log(p / (1-p))
+
+
+It transforms:
+
+0 → 1
+
+into:
+
+-∞ → +∞
+
+
+----------------------------------
+
+
+SIGMOID:
+
+Log-Odds → Probability
+
+
+sigmoid(z) = 1 / (1 + e^(-z))
+
+
+It transforms:
+
+-∞ → +∞
+
+back into:
+
+0 → 1
+
+
+So mentally:
+
+
+Probability
+    |
+    | LOGIT
+    ↓
+Log-Odds / Linear Score
+    |
+    | SIGMOID
+    ↓
+Probability
+
+
+Or:
+
+
+p -------- LOGIT --------> z
+
+p <------- SIGMOID ------- z
+
+
+They are inverse transformations.
+
+
+=========================================================
+
+12. THE BIGGEST CONCEPT TO REMEMBER
+-----------------------------------
+
+Don't memorize Logistic Regression as:
+
+"Classification uses sigmoid."
+
+
+Understand WHY sigmoid exists.
+
+
+The real story:
+
+
+We have a binary problem.
+
+        ↓
+
+We want:
+
+P(Y = 1 | X)
+
+        ↓
+
+Probability is restricted:
+
+0 → 1
+
+        ↓
+
+But our useful linear score:
+
+z = wx + b
+
+is unrestricted:
+
+-∞ → +∞
+
+        ↓
+
+So transform probability into ODDS:
+
+p / (1-p)
+
+Range:
+
+0 → ∞
+
+        ↓
+
+Still can't match wx+b
+because odds cannot be negative.
+
+        ↓
+
+Take LOG:
+
+log(p / (1-p))
+
+Range:
+
+-∞ → +∞
+
+        ↓
+
+NOW it matches:
+
+wx + b
+
+        ↓
+
+So Logistic Regression says:
+
+log(p / (1-p)) = wx + b
+
+        ↓
+
+During prediction,
+we calculate wx+b.
+
+But we want probability.
+
+        ↓
+
+Reverse the logit transformation.
+
+        ↓
+
+SIGMOID
+
+p = 1 / (1 + e^(-z))
+
+        ↓
+
+Now our unrestricted linear score
+becomes a valid probability between 0 and 1.
+
+
+=========================================================
+
+ONE-LINE MENTAL MODEL
+---------------------
+
+LOGIT:
+
+"Take probability and convert it into a number
+that a linear model can work with."
+
+
+SIGMOID:
+
+"Take that linear-model number and convert it
+back into probability."
+
+
+=========================================================
+
+ULTIMATE MEMORY HOOK
+--------------------
+
+Probability
+0 → 1
+
+    ↓ ODDS
+
+0 → ∞
+
+    ↓ LOG
+
+-∞ → +∞
+
+    ↓ CAN NOW MATCH
+
+wx + b
+
+
+And coming back:
+
+
+wx + b
+-∞ → +∞
+
+    ↓ SIGMOID
+      (inverse of logit)
+
+Probability
+0 → 1
