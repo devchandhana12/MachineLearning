@@ -1,1857 +1,521 @@
-LOGISTIC REGRESSION — FROM ZERO TO MAXIMUM LIKELIHOOD
-======================================================
+LOGISTIC REGRESSION — COMPLETE CONCEPTUAL NOTES
 
-GOAL OF LOGISTIC REGRESSION
-===========================
+1. WHY DO WE NEED LOGISTIC REGRESSION?
 
-Logistic Regression is used for classification.
+Linear Regression is useful when the target is a continuous numerical value, such as:
 
-For now, consider binary classification:
+- House price
+- Sales
+- Temperature
 
-    y = 0
-    y = 1
+But some problems are classification problems.
 
-Example:
+Examples:
 
-    0 = Fail
-    1 = Pass
+- Student passes or fails
+- Customer buys a car or does not buy
+- Transaction is fraud or not fraud
 
-or:
+In Binary Classification, we have two classes:
 
-    0 = No disease
-    1 = Disease
+Class 0
+Class 1
 
-or:
+Linear Regression is not suitable for this because its output is unbounded. It can produce values from negative infinity to positive infinity.
 
-    0 = Customer won't buy
-    1 = Customer will buy
+For classification, it is more useful to estimate the probability of belonging to a class.
 
+Probability is bounded between 0 and 1.
 
-The important thing is:
+So we need a way to convert an unbounded linear score into a probability between 0 and 1.
 
-Logistic Regression doesn't initially spit out:
 
-    "CLASS 1!"
+2. FROM LINEAR SCORE TO PROBABILITY
 
-It gives us a PROBABILITY.
+Logistic Regression still starts with a linear score:
 
-Example:
+z = wx + b
 
-    P(Y=1) = 0.82
+The problem is:
 
-Meaning:
+z can range from negative infinity to positive infinity.
 
-    "Given these features,
-     I estimate an 82% probability of class 1."
+Probability can only range from 0 to 1.
 
-Later we can use a threshold such as 0.5 to convert that
-probability into a class.
+To connect these two ranges, we first think about odds.
 
-But first:
+Odds of an event are:
 
-HOW DO WE EVEN GET THAT PROBABILITY?
+Probability of the event / Probability of the event not happening
 
+For binary classification, if:
 
-=========================================================
-PART 1 — WHY CAN'T WE JUST USE LINEAR REGRESSION?
-=========================================================
+p = probability of Class 1
 
-We already know the linear equation:
+then:
 
-    z = wx + b
-
-With multiple features:
-
-    z = b + w1x1 + w2x2 + ... + wnxn
-
-
-Linear Regression is happy because it predicts continuous values.
-
-Example:
-
-    house price = 52.3 lakh
-
-    salary = 8.7 lakh
-
-    sales = 14.2
-
-
-Its output can theoretically be anything:
-
-    -∞ ---------------------------- +∞
-
-
-But classification is different.
-
-Suppose we want:
-
-    probability of passing
-
-
-Probability MUST stay between:
-
-    0 and 1
-
-
-But wx+b could produce:
-
-    -17
-    -2
-     0
-     4
-    83
-
-We cannot say:
-
-    probability = -17
-
-or:
-
-    probability = 83
-
-
-So our first problem is:
-
-    wx+b lives in:
-
-        -∞ → +∞
-
-    probability lives in:
-
-         0 → 1
-
-
-We need some way to connect these two worlds.
-
-
-=========================================================
-PART 2 — START WITH PROBABILITY
-=========================================================
-
-Let:
-
-    p = probability of class 1
-
+1 - p = probability of Class 0
 
 Therefore:
 
-    P(Y=1) = p
-
-
-Because we currently have only two classes:
-
-    P(Y=0) = 1-p
-
+Odds = p / (1 - p)
 
 Example:
 
-    p = 0.8
+If p = 0.8,
+
+Odds = 0.8 / 0.2 = 4
+
+This means the odds are 4:1 in favor of Class 1.
+
+Odds range from 0 to positive infinity.
+
+But our linear score z ranges from negative infinity to positive infinity.
+
+So we take the logarithm of the odds.
+
+This gives us log-odds.
+
+Log-odds can range from negative infinity to positive infinity, which matches the range of our linear score.
+
+Therefore Logistic Regression models the log-odds as a linear combination of the features.
+
+If we reverse the log-odds transformation, we get the Sigmoid function.
+
+The Sigmoid function converts the linear score z into a probability between 0 and 1.
+
+Therefore the prediction pipeline becomes:
+
+Features
+→ Linear score
+→ Sigmoid
+→ Probability
 
 
-means:
+3. MAXIMUM LIKELIHOOD ESTIMATION
 
-    P(class 1) = 0.8
-    P(class 0) = 0.2
+Now the model can generate probabilities.
 
+But we still need to learn the correct weights and bias.
 
-Because:
+The question becomes:
 
-    0.8 + 0.2 = 1
+"Which values of the weights and bias make the labels we actually observed in the training data most probable?"
 
+This is the idea behind Maximum Likelihood Estimation (MLE).
 
-IMPORTANT:
+For every training observation, we look at the probability the model assigned to the actual class.
 
-Throughout Logistic Regression:
+If the actual class is 1, we use the probability of Class 1.
 
-    p means probability of CLASS 1.
+If the actual class is 0, we use the probability of Class 0.
 
+The likelihood of the complete training dataset is obtained by multiplying these probabilities together.
 
-If we want probability of class 0:
+Our objective is to find the weights and bias that maximize this likelihood.
 
-    1-p
+However, multiplying thousands or millions of probabilities produces extremely small numbers and is computationally inconvenient.
 
+Therefore we take the logarithm.
 
-=========================================================
-PART 3 — WHY ODDS?
-=========================================================
+Logarithms convert multiplication into addition.
 
-Probability asks:
+Instead of maximizing likelihood, we can maximize log-likelihood.
 
-    "How likely is class 1?"
-
-
-Odds ask a slightly different question:
-
-    "How likely is class 1
-     COMPARED WITH class 0?"
+Because the logarithm is monotonic, maximizing likelihood and maximizing log-likelihood produce the same optimal parameters.
 
 
-Odds are:
+4. FROM LOG-LIKELIHOOD TO BCE
 
-    odds = p / (1-p)
+Maximum Likelihood gives us a maximization problem.
 
-
-Example:
-
-    p = 0.8
-
-
-Then:
-
-    1-p = 0.2
-
-
-Odds:
-
-    0.8 / 0.2 = 4
-
-
-Interpretation:
-
-    Class 1 is 4 times as likely as class 0.
-
-
-You can think roughly:
-
-    class 1 : class 0
-         4  :  1
-
-
-IMPORTANT:
-
-Odds = 4 does NOT mean:
-
-    probability = 400%
-
-
-The probability is still:
-
-    80%
-
-
-Odds are simply another representation
-of the SAME information.
-
-
----------------------------------------------------------
-WHAT RANGE DO ODDS HAVE?
----------------------------------------------------------
-
-Let's try different probabilities.
-
-
-    p = 0.1
-
-    odds = 0.1 / 0.9
-         ≈ 0.111
-
-
-    p = 0.5
-
-    odds = 0.5 / 0.5
-         = 1
-
-
-    p = 0.8
-
-    odds = 0.8 / 0.2
-         = 4
-
-
-    p = 0.99
-
-    odds = 0.99 / 0.01
-         = 99
-
+However, our optimization framework is usually expressed as minimizing a loss.
 
 Therefore:
 
-    Probability               Odds
+Maximize Log-Likelihood
 
-    p → 0                     odds → 0
+is converted into:
 
-    p = 0.5                   odds = 1
+Minimize Negative Log-Likelihood
 
-    p → 1                     odds → ∞
+For binary classification, this gives us Binary Cross Entropy (BCE).
 
+BCE measures how bad the model's predicted probabilities are compared with the actual binary labels.
 
-So probability:
+For an actual Class 1 observation, we care about the probability p.
 
-    0 → 1
+For an actual Class 0 observation, we care about the probability 1-p.
 
-has now been stretched into:
+The actual label y acts like a switch that allows one mathematical expression to handle both cases.
 
-    0 → ∞
+So BCE gives the model a numerical measure of how wrong its predictions are.
 
 
-Better.
+5. GRADIENT DESCENT
 
-But we STILL have a problem.
+BCE tells us how wrong the model is.
 
+But knowing the loss alone is not enough.
 
-=========================================================
-PART 4 — WHY ODDS AREN'T ENOUGH
-=========================================================
+We also need to know:
 
-Our linear equation:
+"If I change a weight slightly, how will the final loss change?"
 
-    z = wx+b
+The dependency is:
 
+Weight
+→ Linear score
+→ Probability
+→ BCE Loss
 
-can produce:
+The weight affects the linear score.
 
-    -∞ → +∞
+The linear score affects the probability through Sigmoid.
 
+The probability affects BCE.
 
-But odds can only produce:
+Using derivatives and the chain rule, we can trace how changing a weight ultimately changes the loss.
 
-    0 → +∞
+The gradient tells us the direction in which the loss increases the fastest.
 
+Because our goal is to decrease the loss, Gradient Descent moves the parameters in the opposite direction of the gradient.
 
-Odds cannot be negative.
+The learning rate determines how large each update should be.
 
+Training therefore repeatedly performs:
 
-So we still cannot say:
+1. Calculate the linear score.
+2. Convert it into probabilities using Sigmoid.
+3. Calculate BCE.
+4. Calculate gradients.
+5. Update weights and bias.
+6. Repeat.
 
-    wx+b = odds
+Eventually, we obtain parameters that produce a lower loss on the training data.
 
 
-because:
+6. DECISION THRESHOLD
 
-    wx+b might be -10
+Logistic Regression naturally outputs probabilities.
 
-but:
+For example:
 
-    odds can never be -10.
+Probability of Class 1 = 0.73
 
+But sometimes our application requires a final class prediction.
 
-We need one more transformation.
+For that, we use a decision threshold.
 
-We need something that converts:
+A common default threshold is 0.5.
 
-    0 → +∞
+If probability >= 0.5:
+Predict Class 1.
 
-into:
+If probability < 0.5:
+Predict Class 0.
 
-    -∞ → +∞
+However, 0.5 is not a universal rule.
 
+The threshold can be changed depending on the problem.
 
-Enter LOG.
+Lowering the threshold usually predicts more observations as positive.
 
+This generally increases Recall but can also increase False Positives and reduce Precision.
 
-=========================================================
-PART 5 — LOG-ODDS / LOGIT
-=========================================================
+Increasing the threshold makes it harder for an observation to be classified as positive.
 
-We take the logarithm of odds:
+Therefore threshold selection should depend on the business cost of False Positives and False Negatives.
 
-    log(odds)
 
+7. CONFUSION MATRIX
 
-Since:
+Classification models can produce four possible outcomes.
 
-    odds = p/(1-p)
+True Positive:
+Model predicted positive and the actual class was positive.
 
+True Negative:
+Model predicted negative and the actual class was negative.
 
-we get:
+False Positive:
+Model predicted positive but the actual class was negative.
 
-    log(p/(1-p))
+False Negative:
+Model predicted negative but the actual class was positive.
 
+Easy naming rule:
 
-This is called:
+Positive/Negative = what the model predicted.
 
-    LOG-ODDS
+True/False = whether that prediction was correct.
 
-or:
 
-    LOGIT
+8. ACCURACY
 
+Accuracy asks:
 
-Now watch what happens.
+"Out of all predictions, how many did the model predict correctly?"
 
+Accuracy can be useful when the classes are reasonably balanced and the costs of different mistakes are similar.
 
----------------------------------------------------------
-WHEN p = 0.5
----------------------------------------------------------
-
-Odds:
-
-    0.5 / 0.5 = 1
-
-
-Log-odds:
-
-    log(1) = 0
-
-
-So:
-
-    probability = 50%
-    odds = 1
-    log-odds = 0
-
-
----------------------------------------------------------
-WHEN p > 0.5
----------------------------------------------------------
+However, accuracy can become misleading with class imbalance.
 
 Example:
 
-    p = 0.8
+1000 transactions:
 
+990 legitimate
+10 fraud
 
-Odds:
+Suppose the model predicts every transaction as legitimate.
 
-    4
+Accuracy = 99%.
 
+That sounds excellent.
 
-Log-odds:
+But the model caught:
 
-    ln(4) ≈ +1.386
+0 out of 10 fraud cases.
 
+Therefore it is completely useless for detecting fraud despite having 99% accuracy.
 
-Positive.
 
+9. PRECISION
 
----------------------------------------------------------
-WHEN p < 0.5
----------------------------------------------------------
+Precision asks:
 
-Example:
+"Out of everything the model predicted as positive, how many were actually positive?"
 
-    p = 0.2
+Precision is especially important when False Positives are expensive.
 
+High Precision means:
 
-Odds:
+When the model says "positive", it is usually correct.
 
-    0.25
 
+10. RECALL
 
-Log-odds:
+Recall asks:
 
-    ln(0.25) ≈ -1.386
+"Out of all the actual positive cases that existed, how many did the model successfully catch?"
 
+Recall is especially important when False Negatives are expensive.
 
-Negative.
+For example, in disease screening or fraud detection, missing a real positive case can be costly.
 
 
-So:
+11. F1 SCORE
 
-    p < 0.5
-        ↓
-    negative log-odds
+Precision and Recall can trade off against each other.
 
+F1 Score combines Precision and Recall into one metric.
 
-    p = 0.5
-        ↓
-    zero log-odds
+A high F1 Score generally requires both Precision and Recall to be reasonably good.
 
+It is useful when we care about both False Positives and False Negatives, especially with imbalanced datasets.
 
-    p > 0.5
-        ↓
-    positive log-odds
 
+12. REGULARIZATION
 
-And most importantly:
+If we optimize only for training BCE, the model may sometimes learn unnecessarily extreme coefficients.
 
-    log-odds range:
+Extreme coefficients can make the model overly confident and sensitive to small changes in the features.
 
-        -∞ → +∞
+This can contribute to poor generalization.
 
+Regularization changes the objective from:
 
-WAIT.
+"Fit the training data as well as possible"
 
+to:
 
-That's exactly the range of:
+"Fit the training data well without using unnecessarily extreme coefficients."
 
-    wx+b
+Therefore the training objective becomes:
 
+BCE + Regularization Penalty
 
-So now these two worlds finally match.
+L1 regularization penalizes the absolute magnitude of the coefficients.
 
+L1 can push some coefficients exactly to zero, which can produce sparse models.
 
-=========================================================
-PART 6 — HEART OF LOGISTIC REGRESSION
-=========================================================
+L2 regularization penalizes squared coefficient magnitude.
 
-We can now say:
+L2 generally shrinks coefficients toward zero without necessarily making them exactly zero.
 
-    log(p/(1-p)) = wx+b
+Regularization strength controls the trade-off between fitting the training data and keeping the model complexity under control.
 
+Important:
 
-This is the central relationship.
+A weight is NOT the feature value.
 
+If a feature is "hours studied", a weight of 100 does NOT mean someone studied for 100 hours.
 
-In words:
+The weight represents how strongly that feature affects the model's log-odds.
 
-    The LOG-ODDS of class 1
-    are modeled as a linear combination
-    of the input features.
 
+13. ASSUMPTION — LINEARITY IN LOG-ODDS
 
-So we haven't thrown away the linear model.
+Logistic Regression does NOT assume that probability itself has a linear relationship with the features.
 
-We still have:
+It assumes that the log-odds can be represented as a linear combination of the supplied features.
 
-    wx+b
+The probability can still change nonlinearly because the Sigmoid function converts the linear score into probability.
 
+If the true relationship is highly nonlinear and cannot be represented by the supplied features, vanilla Logistic Regression may struggle unless we engineer nonlinear or interaction features.
 
-We just changed what that number represents.
 
+14. ASSUMPTION — INDEPENDENT OBSERVATIONS
 
-In Linear Regression:
+Logistic Regression generally assumes that observations are conditionally independent given the predictors/model.
 
-    wx+b
+One row should not simply be treated as completely independent evidence when it is strongly dependent on another row.
 
-directly represents the prediction.
+This connects directly to Maximum Likelihood because we constructed the dataset likelihood by multiplying the probabilities associated with the observations.
 
 
-In Logistic Regression:
+15. MULTICOLLINEARITY
 
-    wx+b
+Multicollinearity occurs when multiple features contain highly overlapping information.
 
-represents:
+For example:
 
-    LOG-ODDS
+Feature 1 = Salary in rupees
+Feature 2 = Salary in lakhs
 
+Both essentially describe the same thing.
 
-Let's call:
+When highly correlated predictors contain the same information, the model can struggle to determine how much individual effect belongs to each coefficient.
 
-    z = wx+b
+Predictions may still be reasonable, but individual coefficients can become unstable and difficult to interpret.
 
+Regularization, especially L2, can help stabilize the coefficients.
 
-Therefore:
 
-    z = log(p/(1-p))
+16. ENOUGH DATA / ENOUGH CLASS EXAMPLES
 
+Logistic Regression needs enough observations to estimate its coefficients reliably.
 
-=========================================================
-PART 7 — BUT WE DON'T WANT LOG-ODDS
-=========================================================
+More importantly, it needs enough useful examples of the different outcomes.
 
-Suppose the model calculates:
+The classes do NOT need to be exactly 50/50.
 
-    z = 1.386
+However, if we have thousands of Class 0 examples and only a tiny number of Class 1 examples, the model may have insufficient evidence to learn the patterns associated with Class 1.
 
 
-Nice.
+17. NORMAL DISTRIBUTION IS NOT REQUIRED
 
-But a human usually doesn't want:
+Logistic Regression does not require input features to follow a normal distribution.
 
-    "Your log-odds are 1.386."
+Features can be skewed, binary, continuous, categorical after encoding, etc.
 
+It also does not require normally distributed residuals or homoscedasticity in the same way ordinary Linear Regression does.
 
-We want:
 
-    "What's the probability?"
+18. LIMITATION — LINEAR DECISION BOUNDARY
 
+Vanilla Logistic Regression is fundamentally a linear classifier.
 
-So now we have to REVERSE everything.
+Even though Sigmoid is nonlinear, the underlying decision boundary comes from the linear score.
 
+Therefore Logistic Regression may struggle with complicated nonlinear class boundaries.
 
-Earlier:
+Feature engineering, polynomial features, and interaction terms can sometimes help.
 
-    Probability
-        ↓
-      Odds
-        ↓
-    Log-Odds
-        ↓
-    Linear world
+Otherwise, nonlinear models may be more appropriate.
 
 
-Now:
+19. LIMITATION — INFLUENTIAL OBSERVATIONS
 
-    Linear world
-        ↓
-    reverse log-odds
-        ↓
-    Probability
+Extreme or unusual observations can sometimes have a strong influence on the fitted coefficients and decision boundary.
 
+However:
 
-This reverse transformation gives us SIGMOID.
+Large feature value does NOT automatically mean large weight.
 
+The real concern is whether an observation is influential enough to substantially change the fitted model.
 
-=========================================================
-PART 8 — DERIVING SIGMOID
-=========================================================
 
-Start with:
+20. LIMITATION — CLASS IMBALANCE
 
-    log(p/(1-p)) = z
+With severe class imbalance, Logistic Regression may perform poorly on the minority class even while showing high overall accuracy.
 
+In such cases, we may need:
 
-We want:
+- Better evaluation metrics such as Precision, Recall and F1
+- Threshold tuning
+- Class weighting
+- Resampling techniques
 
-    p
+The correct approach depends on the actual problem and the cost of different mistakes.
 
 
-First undo the log.
+21. LIMITATION — PERFECT SEPARATION
 
-Log and exponential undo each other.
+Suppose the training data can be separated perfectly.
 
-So:
+For example:
 
-    p/(1-p) = e^z
+Every student studying below 5 hours fails.
 
+Every student studying above 5 hours passes.
 
-Notice:
+There is absolutely no overlap between the classes.
 
-    p/(1-p)
+The model may already correctly predict:
 
-is simply odds.
+Fail cases with very low probability of passing.
 
+Pass cases with very high probability of passing.
 
-Now isolate p.
+But BCE can still become slightly smaller if the model becomes even more confident.
 
+So the model can keep pushing:
 
-    p/(1-p) = e^z
-
-
-Multiply by (1-p):
-
-    p = e^z(1-p)
-
-
-Expand:
-
-    p = e^z - e^z p
-
-
-Bring p terms together:
-
-    p + e^z p = e^z
-
-
-Factor p:
-
-    p(1+e^z) = e^z
-
-
-Divide:
-
-    p = e^z / (1+e^z)
-
-
-STOP.
-
-
-THIS ALREADY WORKS.
-
-
-We have successfully converted:
-
-    z
-
-back into:
-
-    probability p
-
-
-So mathematically we could use:
-
-    p = e^z / (1+e^z)
-
-
-=========================================================
-PART 9 — THEN WHY THE FAMOUS SIGMOID FORM?
-=========================================================
-
-We usually rewrite:
-
-    e^z / (1+e^z)
-
-
-as:
-
-    1 / (1+e^(-z))
-
-
-These are mathematically IDENTICAL.
-
-
-The second one is simply the conventional sigmoid form:
-
-    sigmoid(z) = 1 / (1+e^(-z))
-
-
-There wasn't another ML breakthrough here.
-
-It's just algebraic rearrangement.
-
-
-So:
-
-    LOGIT
-
-    probability → log-odds
-
+0.90 → 0.99 → 0.999 → 0.9999
 
 and:
 
-    SIGMOID
+0.10 → 0.01 → 0.001 → 0.0001
 
-    log-odds → probability
+To create increasingly extreme probabilities, the model can keep increasing the magnitude of its coefficients.
 
+With perfectly separable data, an unregularized Logistic Regression maximum-likelihood solution may therefore fail to have finite coefficients.
 
-They are inverse transformations.
+This is called Complete Separation.
 
+Regularization helps because increasing coefficient magnitude now carries an additional penalty.
 
-MENTAL MODEL:
+The model must balance:
 
+Reducing BCE
 
-    Probability
-       0 → 1
+against
 
-         ↓ LOGIT
+Keeping coefficients from becoming unnecessarily extreme.
 
-    Log-Odds
-      -∞ → +∞
 
-         ↓ SIGMOID
-
-    Probability
-       0 → 1
-
-
-=========================================================
-PART 10 — WHAT SIGMOID DOES
-=========================================================
-
-Remember:
-
-    z = wx+b
-
-
-If z is very negative:
-
-    sigmoid(z) approaches 0
-
-
-If:
-
-    z = 0
-
-
-then:
-
-    sigmoid(0) = 0.5
-
-
-If z is very positive:
-
-    sigmoid(z) approaches 1
-
-
-So:
-
-    very negative z
-          ↓
-    class-1 probability near 0
-
-
-    z = 0
-          ↓
-    class-1 probability = 0.5
-
-
-    very positive z
-          ↓
-    class-1 probability near 1
-
-
-Our complete prediction journey is now:
-
-
-    FEATURES
-       ↓
-    wx + b
-       ↓
-       z
-       ↓
-    SIGMOID
-       ↓
-       p
-       ↓
-    probability of class 1
-
-
-=========================================================
-PART 11 — NOW THE MODEL NEEDS TO LEARN
-=========================================================
-
-Suppose:
-
-    Actual y = 1
-
-and model predicts:
-
-    p = 0.9
-
-
-Pretty good.
-
-
-Another model predicts:
-
-    p = 0.1
-
-
-Pretty terrible.
-
-
-So now we need to decide:
-
-    Which weights w,b are GOOD?
-
-
-In Linear Regression we asked:
-
-    "Which weights minimize prediction error?"
-
-
-For Logistic Regression, because we're predicting
-probabilities, there's a natural statistical question:
-
-    "Which weights make the outcomes that ACTUALLY
-     happened as probable as possible?"
-
-
-This leads to:
-
-    MAXIMUM LIKELIHOOD ESTIMATION.
-
-
-=========================================================
-PART 12 — WHAT IS LIKELIHOOD?
-=========================================================
-
-Suppose we have three training observations:
-
-
-    Person      Actual
-
-    A             1
-    B             0
-    C             1
-
-
-Current weights produce:
-
-
-    A → p = 0.80
-
-    B → p = 0.30
-
-    C → p = 0.90
-
-
-Remember:
-
-    p ALWAYS means probability of class 1.
-
-
-So for A:
-
-    Actual = 1
-
-    Probability assigned to actual outcome:
-
-    0.80
-
-
-For B:
-
-    Actual = 0
-
-But:
-
-    p = 0.30
-
-means:
-
-    P(class 1) = 0.30
-
-
-Therefore:
-
-    P(class 0) = 1 - 0.30
-               = 0.70
-
-
-Since class 0 ACTUALLY happened:
-
-    probability assigned to reality = 0.70
-
-
-For C:
-
-    Actual = 1
-
-    probability assigned to reality = 0.90
-
-
-So:
-
-
-    Person    Actual    p(class 1)    P(actual class)
-
-    A           1          .80             .80
-
-    B           0          .30             .70
-
-    C           1          .90             .90
-
-
-Likelihood asks:
-
-    "Under these weights,
-     how probable are the labels
-     we actually observed?"
-
-
-=========================================================
-PART 13 — WHY DO WE MULTIPLY PROBABILITIES?
-=========================================================
-
-THIS IS A PROBABILITY RULE.
-
-Forget ML temporarily.
-
-
-Suppose we flip a fair coin twice.
-
-
-Probability of Heads:
-
-    P(H) = 0.5
-
-
-What's the probability of:
-
-    Heads on flip 1
-    AND
-    Heads on flip 2?
-
-
-We DON'T add:
-
-    0.5 + 0.5 = 1
-
-
-That would incorrectly claim HH is guaranteed.
-
-
-For independent events:
-
-    P(A AND B) = P(A) × P(B)
-
-
-Therefore:
-
-    P(H AND H)
-
-    = 0.5 × 0.5
-
-    = 0.25
-
-
-So the beginner rule is:
-
-
-    AND across independent events
-            ↓
-         MULTIPLY
-
-
-    OR across mutually exclusive events
-            ↓
-           ADD
-
-
-There are more general probability rules,
-but this is enough for our current MLE story.
-
-
-=========================================================
-PART 14 — WHY LIKELIHOOD MULTIPLIES
-=========================================================
-
-Return to our dataset.
-
-
-We observed:
-
-    A's label
-    AND
-    B's label
-    AND
-    C's label
-
-
-We're asking:
-
-    "What is the probability of observing
-     ALL these labels together under our model?"
-
-
-Assuming observations are conditionally independent
-given their features and model parameters:
-
-    L = P(A) × P(B) × P(C)
-
-
-Therefore:
-
-    L = .80 × .70 × .90
-
-    L = .504
-
-
-IMPORTANT:
-
-Maximum Likelihood does NOT mean:
-
-    max(.80, .70, .90)
-
-
-We are NOT choosing the biggest individual probability.
-
-
-Likelihood belongs to the MODEL PARAMETERS.
-
-
-Suppose one set of weights gives:
-
-    L = .504
-
-
-Another set of weights gives:
-
-    L = .727
-
-
-The second set of weights explains the observed
-training labels better.
-
-
-Therefore MLE says:
-
-    Find w,b that MAXIMIZE L.
-
-
-=========================================================
-PART 15 — WHAT EXACTLY ARE WE MAXIMIZING?
-=========================================================
-
-Don't confuse these:
-
-
-    z
-    ↓
-    wx+b
-    linear score / log-odds
-
-
-    p
-    ↓
-    sigmoid(z)
-    probability of CLASS 1
-
-
-    likelihood L
-    ↓
-    combines probabilities assigned
-    to ALL observed outcomes
-
-
-    Maximum Likelihood
-    ↓
-    find the w,b that maximize L
-
-
-So:
-
-    Maximum Likelihood is NOT p.
-
-    Maximum Likelihood is NOT z.
-
-
-We are searching for:
-
-    the PARAMETERS w,b
-
-that make:
-
-    the observed training dataset
-
-most likely.
-
-
-=========================================================
-PART 16 — WHY NOT ADD THE PROBABILITIES?
-=========================================================
-
-Suppose:
-
-    .8
-    .7
-    .9
-
-
-If we add:
-
-    .8 + .7 + .9 = 2.4
-
-
-That's not the joint probability
-of all three observed events.
-
-
-We're asking:
-
-    A happened
-    AND
-    B happened
-    AND
-    C happened
-
-
-So:
-
-    .8 × .7 × .9
-
-
-not:
-
-    .8 + .7 + .9
-
-
-The multiplication didn't come from Logistic Regression.
-
-It came from probability theory
-plus the conditional-independence assumption.
-
-
-=========================================================
-PART 17 — PROBLEM WITH GIANT PRODUCTS
-=========================================================
-
-Three observations are easy:
-
-    .8 × .7 × .9
-
-
-But imagine:
-
-    1,000,000 training rows.
-
-
-Likelihood becomes:
-
-    .8 × .7 × .9 × .63 × .91 × .72 × ...
-
-
-All these numbers are between:
-
-    0 and 1
-
-
-Multiplying many such numbers makes the result
-extremely tiny.
-
-
-Example:
-
-    .8 × .7          = .56
-
-    × .9             = .504
-
-    × .6             = .3024
-
-    × .8             = .24192
-
-    ...
-
-
-Eventually computers may be dealing with something like:
-
-    0.00000000000000000000000000000000000...
-
-
-Also:
-
-    giant multiplication
-
-is less convenient mathematically than:
-
-    addition
-
-
-Enter LOG again.
-
-
-=========================================================
-PART 18 — WHY LOG-LIKELIHOOD?
-=========================================================
-
-Logs have a beautiful property:
-
-    log(A × B × C)
-
-becomes:
-
-    log(A) + log(B) + log(C)
-
-
-Therefore:
-
-
-    Likelihood:
-
-    .8 × .7 × .9
-
-
-becomes:
-
-
-    Log-Likelihood:
-
-    log(.8) + log(.7) + log(.9)
-
-
-IMPORTANT:
-
-We are NOT saying:
-
-    "Probability should have been addition,
-     so let's use log to fix it."
-
-
-NO.
-
-
-Probability theory already gave us:
-
-    MULTIPLICATION
-
-
-because we're dealing with:
-
-    A AND B AND C
-
-
-We construct the correct likelihood FIRST.
-
-THEN we take log.
-
-Log simply converts:
-
-    products → sums
-
-
-making optimization and computation easier.
-
-
-=========================================================
-PART 19 — DOES LOG CHANGE WHICH MODEL WINS?
-=========================================================
-
-Suppose:
-
-    Model A likelihood = .7
-
-    Model B likelihood = .4
-
-
-Clearly:
-
-    .7 > .4
-
-
-Take logs:
-
-
-    log(.7) ≈ -.357
-
-    log(.4) ≈ -.916
-
-
-Still:
-
-    -.357 > -.916
-
-
-So Model A STILL wins.
-
-
-Why?
-
-Because log is monotonically increasing.
-
-
-As x increases:
-
-    log(x) also increases.
-
-
-Therefore:
-
-    the parameters that maximize likelihood
-
-are also:
-
-    the parameters that maximize log-likelihood.
-
-
-So:
-
-    MAXIMIZE LIKELIHOOD
-
-and:
-
-    MAXIMIZE LOG-LIKELIHOOD
-
-
-lead to the SAME optimal w,b.
-
-
-=========================================================
-PART 20 — WHY ARE LOG PROBABILITIES NEGATIVE?
-=========================================================
-
-Our probabilities lie between:
-
-    0 and 1
-
-
-For numbers between 0 and 1:
-
-    log(x) is negative.
-
-
-Example:
-
-    log(1)     = 0
-
-    log(.9)    ≈ -.105
-
-    log(.5)    ≈ -.693
-
-    log(.1)    ≈ -2.303
-
-    log(.01)   ≈ -4.605
-
-
-There is NOTHING WRONG with negative log-likelihood values.
-
-
-We could simply say:
-
-    maximize log-likelihood
-
-
-and move:
-
-    -10 → -5 → -2 → -1 → 0
-
-                              ↑
-                            better
-
-
-=========================================================
-PART 21 — THEN WHY THE NEGATIVE SIGN?
-=========================================================
-
-This is important.
-
-
-We do NOT multiply by -1 merely because:
-
-    "Negative numbers look ugly."
-
-
-Negative numbers are completely fine.
-
-
-Our current objective is:
-
-    MAXIMIZE log-likelihood
-
-
-But optimization is commonly expressed as:
-
-    MINIMIZE loss
-
-
-So we flip the sign.
-
-
-Instead of:
-
-    maximize log-likelihood
-
-
-we say:
-
-    minimize NEGATIVE log-likelihood
-
-
-Example:
-
-
-    MAXIMIZE:
-
-    -10 → -5 → -2 → 0
-
-
-is equivalent to:
-
-
-    MINIMIZE:
-
-     10 →  5 →  2 → 0
-
-
-Same destination.
-
-Same optimal parameters.
-
-
-So the negative sign converts:
-
-    MAXIMIZATION
-
-into:
-
-    MINIMIZATION
-
-
-=========================================================
-PART 22 — HOW DO WE HANDLE y=1 AND y=0 IN ONE EQUATION?
-=========================================================
-
-Remember our basic rule:
-
-
-    Actual y = 1
-        ↓
-    use p
-
-
-    Actual y = 0
-        ↓
-    use 1-p
-
-
-We could literally write:
-
-    if y == 1:
-        use p
-
-    else:
-        use 1-p
-
-
-But mathematics gives us a neat trick.
-
-Since:
-
-    y ∈ {0,1}
-
-
-y itself can act as an ON/OFF switch.
-
-
-Because:
-
-    1 × something = something
-
-    0 × something = 0
-
-
-For class 1:
-
-    y × p
-
-
-If:
-
-    y = 1
-
-then:
-
-    1 × p = p
-
-
-If:
-
-    y = 0
-
-then:
-
-    0 × p = 0
-
-
-So y switches the class-1 probability ON/OFF.
-
-
-For class 0 we need the opposite switch:
-
-    1-y
-
-
-If:
-
-    y = 0
-
-then:
-
-    1-y = 1
-
-
-If:
-
-    y = 1
-
-then:
-
-    1-y = 0
-
-
-Therefore class-0 side becomes:
-
-    (1-y)(1-p)
-
-
-Combine them:
-
-    yp + (1-y)(1-p)
-
-
-This expression simply means:
-
-    "Give me the probability assigned
-     to the class that ACTUALLY occurred."
-
-
-=========================================================
-PART 23 — BRING LOG BACK
-=========================================================
-
-For log-likelihood we don't need merely:
-
-    p
-
-or:
-
-    1-p
-
-
-We need:
-
-    log(p)
-
-or:
-
-    log(1-p)
-
-
-So use the exact same switches:
-
-
-    y log(p) + (1-y) log(1-p)
-
-
-Let's test it.
-
-
----------------------------------------------------------
-IF y = 1
----------------------------------------------------------
-
-    1 log(p) + 0 log(1-p)
-
-
-leaves:
-
-    log(p)
-
-
-Correct.
-
-
----------------------------------------------------------
-IF y = 0
----------------------------------------------------------
-
-    0 log(p) + 1 log(1-p)
-
-
-leaves:
-
-    log(1-p)
-
-
-Correct.
-
-
-So this equation is basically a mathematical:
-
-    if/else
-
-
-=========================================================
-PART 24 — BINARY CROSS-ENTROPY FINALLY APPEARS
-=========================================================
-
-We currently have log-likelihood for one observation:
-
-    y log(p) + (1-y) log(1-p)
-
-
-But remember:
-
-    We want to MAXIMIZE log-likelihood.
-
-
-To express it as a loss that we MINIMIZE,
-negate it:
-
-
-    Loss =
-    -[y log(p) + (1-y) log(1-p)]
-
-
-This is:
-
-    BINARY CROSS-ENTROPY
-
-also called:
-
-    LOG LOSS
-
-
-And now NOTHING in this equation should look random.
-
-
-Every piece has a reason:
-
-
-    y
-    ↓
-    switch for actual class 1
-
-
-    1-y
-    ↓
-    switch for actual class 0
-
-
-    p
-    ↓
-    probability of class 1
-
-
-    1-p
-    ↓
-    probability of class 0
-
-
-    log
-    ↓
-    turns likelihood products into sums
-    while preserving which parameters are best
-
-
-    negative sign
-    ↓
-    converts maximize log-likelihood
-    into minimize loss
-
-
-=========================================================
-THE ENTIRE LOGISTIC REGRESSION STORY SO FAR
-=========================================================
-
-
-We want binary classification.
-
-        ↓
-
-We want probability of class 1.
-
-        ↓
-
-Linear equation:
-
-    z = wx+b
-
-cannot directly be probability because:
-
-    z → -∞ to +∞
-
-while:
-
-    probability → 0 to 1
-
-        ↓
-
-Represent probability as ODDS:
-
-    p/(1-p)
-
-Range:
-
-    0 → ∞
-
-        ↓
-
-Still doesn't match wx+b
-because odds cannot be negative.
-
-        ↓
-
-Take LOG:
-
-    log(p/(1-p))
-
-Range:
-
-    -∞ → +∞
-
-        ↓
-
-Now it matches the linear world.
-
-        ↓
-
-Set:
-
-    log(p/(1-p)) = wx+b
-
-        ↓
-
-wx+b therefore represents LOG-ODDS.
-
-        ↓
-
-But we want probability.
-
-        ↓
-
-Reverse logit using SIGMOID:
-
-    p = sigmoid(wx+b)
-
-        ↓
-
-Now model produces:
-
-    P(Y=1)
-
-        ↓
-
-For each observation:
-
-    y=1 → actual-class probability = p
-
-    y=0 → actual-class probability = 1-p
-
-        ↓
-
-For the whole dataset we observed:
-
-    row1 AND row2 AND row3 AND ...
-
-        ↓
-
-Under conditional independence,
-joint likelihood is a PRODUCT:
-
-    L = P1 × P2 × P3 × ...
-
-        ↓
-
-Find w,b that:
-
-    MAXIMIZE LIKELIHOOD
-
-        ↓
-
-Take log:
-
-    products become sums
-
-        ↓
-
-MAXIMIZE LOG-LIKELIHOOD
-
-        ↓
-
-Negate it:
-
-    MINIMIZE NEGATIVE LOG-LIKELIHOOD
-
-        ↓
-
-For binary outcomes this becomes:
-
-    BINARY CROSS-ENTROPY
-
-        ↓
-
-Now we have a differentiable loss.
-
-        ↓
-
-NEXT:
-
-    How does Gradient Descent use this loss
-    to change w and b?
-
-
-=========================================================
 FINAL MENTAL MODEL
-=========================================================
 
-PREDICTION SIDE:
+Logistic Regression starts with features.
 
-    X
-    ↓
-    wx+b
-    ↓
-    log-odds z
-    ↓
-    sigmoid
-    ↓
-    probability p
+The features and learned coefficients produce a linear score.
 
+Sigmoid converts that score into a probability.
 
-LEARNING SIDE:
+Maximum Likelihood gives us the principle for choosing good parameters.
 
-    probability p
-    +
-    actual y
-    ↓
-    likelihood
-    ↓
-    log-likelihood
-    ↓
-    negative log-likelihood / BCE
-    ↓
-    loss
-    ↓
-    gradient
-    ↓
-    update w,b
+Negative Log-Likelihood / BCE gives us a loss to minimize.
 
+Gradient Descent adjusts the parameters to reduce that loss.
 
-ONE SENTENCE:
+The trained model outputs probabilities.
 
-Logistic Regression learns the weights that make the
-labels we actually observed as probable as possible;
-Maximum Likelihood gives us that objective, log makes
-the product manageable, and negating log-likelihood
-turns the maximization problem into the BCE loss that
-we can minimize.
+A decision threshold converts those probabilities into classes.
+
+Confusion Matrix, Accuracy, Precision, Recall and F1 help us evaluate those classifications.
+
+Regularization helps control unnecessarily extreme coefficients and improve stability/generalization.
+
+Assumptions and limitations tell us when Logistic Regression is appropriate and when another model or additional feature engineering may be required.
