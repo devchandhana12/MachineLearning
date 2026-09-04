@@ -1,247 +1,638 @@
 # Machine Learning & Applied AI 🚀
 
-A hands-on repository documenting my journey through **Machine Learning, Deep Learning, Transformers, and Applied AI**.
+A hands-on engineering repository documenting my work across **Machine Learning, Transformers, RAG, AI Agents, Fine-Tuning, and AI System Design**.
 
-The goal of this repository is not just to collect code, but to build a strong understanding of **why algorithms work, how they behave, how to implement them, and how they fit into real-world AI systems**.
+I come from a software engineering background, and this repository represents my transition deeper into **Machine Learning and Applied AI Engineering**.
 
----
+Rather than treating ML algorithms or LLMs as black boxes, my goal is to understand:
 
-## 🎯 What I'm Working Towards
-
-My learning path runs in parallel across two tracks:
-
-### 🧠 Core Machine Learning
-
-Building strong foundations in:
-
-* Data preprocessing
-* Exploratory data analysis
-* Feature engineering
-* Supervised learning
-* Unsupervised learning
-* Model evaluation
-* Optimization
-* Deep learning fundamentals
-* MLOps and model deployment
-
-### 🤖 Modern AI
-
-Understanding and building systems around:
-
-* Transformer architecture
-* NLP
-* Embeddings
-* Retrieval-Augmented Generation (RAG)
-* Vector databases
-* AI agents
-* Tool calling
-* Fine-tuning
-* LoRA / QLoRA
-* AI system design
-
-The idea is to eventually connect both tracks — understanding modern AI systems without treating the underlying ML concepts as a black box.
+* **Why** an approach works
+* What happens mathematically during training
+* How to implement the underlying concepts
+* How libraries abstract those concepts
+* How models behave during inference
+* How everything fits into a real production system
 
 ---
 
-# 📚 Current Progress
+# 🎯 Current Direction
 
-## Data Preparation & Preprocessing
+My learning currently runs across two parallel tracks:
 
-Working with real datasets to understand how data should be inspected, cleaned, validated, and transformed before training a model.
+```text
+                Machine Learning
+                       │
+        Supervised Learning Foundations
+                       │
+              Decision Trees  ← Current
+                       │
+       Ensembles / Model Evaluation
+                       │
+              Deeper ML Concepts
+                       │
+                       ▼
+                Deep Learning
+                       │
+                       │
+                       ▼
+            Modern AI / Transformers
+                       ▲
+                       │
+            Transformer Architecture
+                       │
+                  RAG Systems
+                       │
+                   AI Agents
+                       │
+            Fine-Tuning / LoRA / QLoRA
+```
 
-Topics covered include:
+These are not completely separate tracks.
+
+Whenever something on the AI side depends on a Machine Learning or Deep Learning concept, I go back and understand that prerequisite before continuing.
+
+---
+
+# 🧠 Machine Learning
+
+## ✅ Data Preparation & Preprocessing
+
+Before training models, I started by understanding what happens to real-world data before it ever reaches an algorithm.
+
+Topics explored include:
 
 * Dataset grain / unit of observation
-* Schema understanding
-* Numerical vs categorical features
+* Dataset and schema understanding
+* Numerical vs categorical variables
+* Continuous, discrete and ordinal features
 * Target variables
 * Target leakage
+* Duplicate records
 * Missing values
 * MCAR / MAR / MNAR
 * Structural vs actual missing values
-* Duplicate records
 * Inconsistent categories
-* Data validation
+* Conditional missing-value handling
 * Categorical encoding
+* One-Hot Encoding
+* Data validation
 * Feature preprocessing
 
-Practical work includes datasets such as:
+### Practical Work
 
-* Kaggle House Prices
-* Customer Churn datasets
-* Other datasets used for preprocessing and experimentation
+One of the main datasets used for this is the **Kaggle House Prices / Ames Housing dataset**, where I'm treating preprocessing as a real data-understanding problem rather than simply running `fillna()` across columns.
+
+Examples include understanding relationships such as:
+
+```text
+GarageType = NULL
+        │
+        ├── GarageArea = 0
+        │       ↓
+        │   No Garage
+        │
+        └── GarageArea > 0
+                ↓
+         Potential Data Issue
+```
+
+The goal is to distinguish between:
+
+```text
+Missing because information is unavailable
+                    vs
+Missing because the feature does not exist
+```
 
 ---
 
-## Machine Learning Algorithms
+# 📈 Supervised Learning
 
-### ✅ Linear Regression
+## ✅ Linear Regression
 
-Covered:
+Covered from intuition through implementation.
+
+### Concepts
 
 * Regression intuition
 * Linear relationships
 * Prediction equation
+* Features and weights
+* Bias / intercept
 * Loss functions
 * Mean Squared Error
 * Gradient Descent
 * Learning rate
 * Weight updates
-* Underfitting and overfitting
+* Convergence intuition
+* Underfitting
+* Overfitting
 * Training vs inference
+
+The emphasis was understanding the full flow:
+
+```text
+Features
+   ↓
+Prediction
+   ↓
+Compare with Actual Value
+   ↓
+Calculate Loss
+   ↓
+Calculate Gradients
+   ↓
+Update Weights
+   ↓
+Repeat
+```
+
+And importantly:
+
+```text
+Training
+   ↓
+Prediction → Loss → Gradient → Weight Update
+
+Inference
+   ↓
+Prediction only
+```
 
 ---
 
-### ✅ Logistic Regression
+## ✅ Logistic Regression
+
+Studied binary classification from the linear model all the way through the optimization process.
+
+### Binary Classification
 
 Covered:
 
-* Binary classification
+* Classification intuition
 * Linear decision function
-* Sigmoid function
-* Probabilities
+* Logits
+* Sigmoid
+* Probability interpretation
+* Classification thresholds
 * Decision boundaries
 * Binary Cross Entropy
 * Log loss intuition
 * Gradient Descent
 * Weight updates
-* Training vs inference
-* Multiple input features
-* Categorical features
+* Multiple features
+* Categorical variables
 * One-Hot Encoding
+* Training vs inference
+* Underfitting and overfitting
 
-Currently expanding this into more realistic classification problems.
+### Multiclass Classification
+
+Extended the same ideas into multiclass problems.
+
+Covered:
+
+* Binary vs multiclass classification
+* Multiple class logits
+* Softmax
+* Why Softmax probabilities sum to `1`
+* Probability distributions across classes
+* One-Hot encoded targets
+* Argmax
+* Categorical Cross-Entropy
+* Correct-class probability
+
+Relationship between binary and multiclass classification:
+
+```text
+Binary Classification
+        ↓
+Sigmoid
+        ↓
+Binary Cross Entropy
+```
+
+```text
+Multiclass Classification
+        ↓
+Softmax
+        ↓
+Categorical Cross Entropy
+```
+
+Example:
+
+```text
+Classes:
+[Cat, Horse, Dog]
+
+Model logits
+      ↓
+Softmax
+      ↓
+[0.12, 0.32, 0.56]
+                  ↑
+             Highest Probability
+
+Actual:
+[0, 0, 1]
+
+Prediction:
+Dog ✅
+
+Categorical Cross Entropy
+        ↓
+Measures how much probability
+the model assigned to the
+correct class.
+```
+
+Important concepts are also implemented with **plain Python and NumPy** before relying completely on higher-level ML libraries.
 
 ---
 
-## 🔄 Coming Next
+# 🌳 Decision Trees
 
-Machine Learning:
+### 🚧 Currently Studying
 
-* Evaluation metrics
+Current Machine Learning topic.
 
-  * Accuracy
-  * Precision
-  * Recall
-  * F1 Score
-  * ROC-AUC
-  * Confusion Matrix
-* Regularization
-* Decision Trees
-* Random Forest
-* Ensemble methods
-* KNN
-* Naive Bayes
-* Support Vector Machines
-* Clustering
-* Feature engineering
-* Model selection
+The goal is to understand:
+
+* Why Decision Trees are needed
+* How a tree chooses a split
+* Decision boundaries
+* Entropy
+* Gini Impurity
+* Information Gain
+* Recursive splitting
+* Leaf nodes
+* Stopping conditions
+* Overfitting in trees
+* Tree depth
+* Feature importance
+
+This will naturally lead into:
+
+```text
+Decision Tree
+      ↓
+Random Forest
+      ↓
+Boosting
+      ↓
+Gradient Boosting / XGBoost
+```
 
 ---
 
-# 🧠 Transformer & AI Track
+# 📊 Model Evaluation
 
-Alongside traditional ML, I'm revisiting Transformer architecture from the ground up.
-
-The goal here is to understand what actually happens inside modern language models rather than only learning how to call an API.
+Model evaluation is studied alongside algorithms where it becomes relevant rather than as an isolated collection of formulas.
 
 Topics include:
 
+* Confusion Matrix
+* Accuracy
+* Precision
+* Recall
+* F1 Score
+* ROC
+* AUC
+* Classification thresholds
+* Class imbalance
+* Train / validation / test splits
+* Cross-validation
+* Bias vs variance
+
+---
+
+# 🗺️ ML Roadmap
+
+My current priority is to build depth across important supervised learning algorithms before expanding further into classical ML.
+
 ```text
-Text
- ↓
-Tokenizer
- ↓
-Tokens
- ↓
-Token Embeddings
- ↓
-Positional Information
- ↓
-Self-Attention
- ↓
-Multi-Head Attention
- ↓
-Feed Forward Networks
- ↓
-Transformer Blocks
- ↓
-Language Model
+Preprocessing ✅
+      ↓
+Linear Regression ✅
+      ↓
+Logistic Regression ✅
+      ↓
+Softmax / Multiclass Classification ✅
+      ↓
+Decision Trees 🚧
+      ↓
+Random Forest
+      ↓
+Boosting / XGBoost
+      ↓
+KNN / Naive Bayes / SVM
+      ↓
+Model Selection & Cross-Validation
+      ↓
+Deep Learning Foundations
 ```
 
-This track will gradually cover:
+Unsupervised learning topics such as **K-Means and PCA** remain part of the broader roadmap, but my current priority is supervised ML, Deep Learning fundamentals, and Applied AI.
+
+---
+
+# 🤖 Transformer & Modern AI Track
+
+In parallel with classical Machine Learning, I'm studying modern AI systems starting from the architecture underneath Large Language Models.
+
+The goal is not merely:
+
+```python
+model.generate(...)
+```
+
+but understanding what happens before that call works.
+
+---
+
+# 🧠 Transformer Architecture
+
+The Transformer track starts from raw text and follows the information through the model.
+
+```text
+Raw Text
+   ↓
+Tokenizer
+   ↓
+Token IDs
+   ↓
+Token Embeddings
+   ↓
+Positional Information
+   ↓
+Self-Attention
+   ↓
+Multi-Head Attention
+   ↓
+Feed Forward Network
+   ↓
+Residual Connections
+   ↓
+Layer Normalization
+   ↓
+Transformer Blocks
+   ↓
+Output Representation
+   ↓
+Language Model Head
+   ↓
+Next Token Probabilities
+```
+
+Topics being explored include:
 
 * Tokenization
+* Vocabulary
+* Token IDs
+* Different tokenization strategies
 * Embeddings
+* Positional information
 * Attention
 * Self-Attention
 * Query, Key and Value
+* Scaled Dot-Product Attention
 * Multi-Head Attention
 * Feed Forward Networks
 * Residual connections
 * Layer normalization
-* Encoder / Decoder architecture
-* GPT-style decoder-only models
-* Training objectives
-* Inference
-* Fine-tuning
+* Encoder architecture
+* Decoder architecture
+* Decoder-only Transformers
+* GPT-style architectures
+* Training vs inference
+* Next-token prediction
 
-Wherever a Transformer concept depends on a Machine Learning or Deep Learning prerequisite, I study that prerequisite alongside it.
-
----
-
-# 🏗️ AI System Design
-
-System design is part of the learning process from the beginning rather than something reserved for later.
-
-For each major topic, I try to understand questions such as:
-
-* Where does this component sit in a production system?
-* What happens during training vs inference?
-* How does data flow through the system?
-* What are the scalability bottlenecks?
-* What should be cached?
-* Where should preprocessing happen?
-* How should models be served?
-* How are embeddings stored?
-* How do different AI services communicate?
-* How do latency, accuracy and cost trade-offs affect architecture?
-
-Eventually this will expand into architectures for:
-
-* ML prediction systems
-* RAG systems
-* AI agents
-* LLM applications
-* Fine-tuned model serving
+Whenever concepts such as neural networks, activation functions, optimization or backpropagation become necessary, I connect them back to the corresponding Deep Learning fundamentals.
 
 ---
 
-# 🧪 Learning Approach
+# 🔎 Retrieval-Augmented Generation
 
-I try to follow the same pattern for every major concept:
+I've already worked with RAG systems and am revisiting them with more emphasis on **retrieval quality and system design**.
+
+Areas of focus include:
+
+* Document ingestion
+* Chunking strategies
+* Embeddings
+* Vector databases
+* Semantic search
+* Dense retrieval
+* Sparse retrieval
+* Hybrid search
+* Reranking
+* Context construction
+* Prompt construction
+* Retrieval evaluation
+* Caching
+* Latency
+* Production architecture
+
+Typical architecture:
 
 ```text
-Problem
-   ↓
-Why do we need it?
-   ↓
-Intuition
-   ↓
-Concept
-   ↓
-Math
-   ↓
-Implementation
-   ↓
-Experiment
-   ↓
-Real-world system design
+Documents
+    ↓
+Chunking
+    ↓
+Embedding Model
+    ↓
+Vector Database
+    │
+    │
+User Query
+    ↓
+Query Embedding
+    ↓
+Retrieval
+    ↓
+Reranking
+    ↓
+Relevant Context
+    ↓
+Prompt Construction
+    ↓
+LLM
+    ↓
+Response
 ```
 
-I prefer understanding **why something works before using the abstraction provided by a library**.
+---
 
-Libraries like Scikit-learn, PyTorch, Hugging Face and LangChain are incredibly useful — but the goal is to understand what is happening underneath them as well.
+# 🤖 AI Agents
+
+The next major Applied AI implementation focus is moving beyond static LLM workflows into systems capable of deciding when and how to use tools.
+
+Topics include:
+
+* Tool calling
+* Structured outputs
+* Agent state
+* Tool selection
+* Workflow orchestration
+* LangGraph
+* Memory
+* Error handling
+* Retry strategies
+* Human-in-the-loop workflows
+* Multi-step execution
+* Agent observability
+
+Typical flow:
+
+```text
+User
+ ↓
+LLM / Agent
+ ↓
+Understand Task
+ ↓
+Select Tool
+ ↓
+Execute Tool
+ ↓
+Observe Result
+ ↓
+Decide Next Action
+ ↓
+Final Response
+```
+
+The goal is to build agents as **software systems**, not just prompts wrapped around an LLM.
+
+---
+
+# 🔧 Fine-Tuning
+
+After strengthening RAG and agent implementations, the next major area is model fine-tuning.
+
+Topics planned include:
+
+* When to fine-tune
+* Fine-tuning vs RAG
+* Dataset preparation
+* Instruction datasets
+* Supervised Fine-Tuning
+* Hugging Face Transformers
+* Hugging Face Datasets
+* PEFT
+* LoRA
+* QLoRA
+* Quantization
+* Training configuration
+* Evaluation
+* Model serving
+* GPU memory considerations
+
+A major focus will be understanding the engineering trade-off:
+
+```text
+Prompt Engineering
+        vs
+RAG
+        vs
+Fine-Tuning
+```
+
+rather than automatically choosing one technique.
+
+---
+
+# 🏗️ ML & AI System Design
+
+System design is not something I'm postponing until after learning the algorithms.
+
+For every major topic, I try to ask:
+
+* Where does this model live in a production architecture?
+* Where does preprocessing happen?
+* What happens during training?
+* What happens during inference?
+* Where is the model stored?
+* How is it deployed?
+* How do clients communicate with it?
+* What needs to be cached?
+* What happens when traffic increases?
+* How is the system monitored?
+* What should happen when the model fails?
+* How do we evaluate output quality?
+* What are the latency / accuracy / cost trade-offs?
+
+This eventually connects concepts across:
+
+```text
+Data
+ ↓
+Training Pipeline
+ ↓
+Model Artifact
+ ↓
+Model Registry
+ ↓
+Serving Layer
+ ↓
+API
+ ↓
+Application
+ ↓
+Monitoring
+ ↓
+Feedback
+```
+
+and modern AI architectures such as:
+
+```text
+Client
+ ↓
+API Gateway
+ ↓
+AI Service
+ ├── LLM
+ ├── Retriever
+ ├── Vector DB
+ ├── Agent
+ ├── Tools
+ └── Cache
+ ↓
+Observability
+```
+
+---
+
+# 🧪 How I Learn
+
+My preferred learning loop is:
+
+```text
+Why does this exist?
+        ↓
+Build intuition
+        ↓
+Understand the concept
+        ↓
+Understand the necessary math
+        ↓
+Implement it manually
+        ↓
+Implement with libraries
+        ↓
+Experiment with real data
+        ↓
+Understand failure cases
+        ↓
+Think about production/system design
+```
+
+I don't aim to derive every equation from first principles before moving forward.
+
+The goal is to understand each concept deeply enough to **reason about it, implement it, debug it, explain it, and use it correctly** — then deepen specific areas when necessary.
 
 ---
 
@@ -255,145 +646,163 @@ Libraries like Scikit-learn, PyTorch, Hugging Face and LangChain are incredibly 
 * Matplotlib
 * Scikit-learn
 * Jupyter
+* Kaggle
 
-### Deep Learning & AI
+### Deep Learning & LLMs
 
 * PyTorch
 * Hugging Face
 * Transformers
-* LangChain
-* LangGraph
+* PEFT
+* Hugging Face Datasets
 
 ### Applied AI
 
+* LangChain
+* LangGraph
 * FastAPI
 * Qdrant
 * Pinecone
 * ChromaDB
 * Redis
 
-More tools will be added as the repository grows.
-
----
-
-# 📂 Repository Structure
-
-The repository will gradually follow a structure similar to:
-
-```text
-machine-learning/
-│
-├── data-preprocessing/
-│   ├── notes/
-│   ├── notebooks/
-│   └── projects/
-│
-├── supervised-learning/
-│   ├── linear-regression/
-│   ├── logistic-regression/
-│   └── ...
-│
-├── unsupervised-learning/
-│
-├── model-evaluation/
-│
-├── feature-engineering/
-│
-├── deep-learning/
-│
-├── transformers/
-│   ├── tokenization/
-│   ├── embeddings/
-│   ├── attention/
-│   └── ...
-│
-├── applied-ai/
-│   ├── rag/
-│   ├── agents/
-│   └── fine-tuning/
-│
-├── projects/
-│
-└── README.md
-```
-
-The structure may evolve as the learning journey progresses.
-
 ---
 
 # 🧩 Projects
 
-This repository will contain small experiments as well as complete end-to-end projects.
+This repository will gradually contain both focused experiments and complete end-to-end projects.
 
-Projects will focus on areas such as:
+Areas include:
 
-* Data preprocessing
-* Classification
+* Data preprocessing pipelines
 * Regression
-* Customer churn prediction
-* Feature engineering
-* Model evaluation
-* RAG
-* AI agents
+* Classification
+* Structured-data ML
+* Transformer experiments
+* RAG systems
+* AI Agents
 * Fine-tuning
-* ML / AI system design
+* ML APIs
+* AI system design
 
-The intention is to move beyond isolated notebooks and gradually build **production-oriented ML and AI systems**.
+For larger projects, the aim is to document not just:
+
+> **What did I build?**
+
+but also:
+
+> **Why was it designed this way?**
+
+Including architecture, trade-offs, failure cases, and possible improvements.
 
 ---
 
-# 📈 Current Focus
+# 📍 Current Focus
 
-Right now my main focus is:
-
-**Machine Learning**
+### Machine Learning
 
 ```text
-Data Preprocessing
-        ↓
-Linear Regression ✅
-        ↓
 Logistic Regression ✅
         ↓
-Evaluation Metrics
+Softmax & Multiclass Classification ✅
         ↓
-More Supervised ML Algorithms
+Decision Trees 🚧
+        ↓
+Random Forest
+        ↓
+Boosting / XGBoost
+        ↓
+Broader Supervised ML
 ```
 
-**Modern AI**
+### Applied AI
 
 ```text
-Transformer Architecture
+Transformer Fundamentals 🚧
         ↓
-RAG
+RAG Review + System Design
         ↓
-AI Agents
+Build an AI Agent
         ↓
 Fine-Tuning
         ↓
 LoRA / QLoRA
 ```
 
-Both tracks will eventually converge as I move deeper into **Machine Learning and AI Engineering**.
+### Longer Term
+
+```text
+Machine Learning
+       +
+Deep Learning
+       +
+Transformers
+       +
+Production AI
+       ↓
+Applied ML / AI Engineering
+```
 
 ---
 
-## 🌱 Why This Repository Exists
+# 🌱 Why This Repository Exists
 
-This repository is primarily my engineering notebook.
+This repository is my engineering notebook for Machine Learning and AI.
 
-Instead of only watching courses or reading theory, I'm documenting concepts, writing implementations, breaking things, experimenting with datasets, and gradually connecting the pieces together.
+Instead of only consuming courses or tutorials, I'm using it to document:
 
-The goal is simple:
+* Concepts
+* Questions
+* Implementations
+* Experiments
+* Mistakes
+* Debugging
+* Projects
+* Architecture decisions
+* System design
 
-> **Understand the fundamentals deeply enough to build useful ML and AI systems without treating the model as a black box.**
+The goal is not to collect as many algorithms as possible.
+
+The goal is to become capable of looking at an ML or AI problem and reasoning through:
+
+```text
+What problem are we solving?
+
+Why should we use this approach?
+
+How does it work?
+
+How should we evaluate it?
+
+How should we implement it?
+
+How should we deploy it?
+
+What breaks at scale?
+
+What would I change in production?
+```
+
+> **Understand enough of the fundamentals to build, debug and design real Machine Learning and AI systems — without treating the model as magic.**
 
 ---
 
 ### 🚧 Work in Progress
 
-This repository is actively being updated as I learn, experiment, and build.
+This repository is continuously evolving as I learn and build.
 
-Expect plenty of:
-
-**notes → experiments → mistakes → fixes → projects → better systems.**
+```text
+Understand
+   ↓
+Implement
+   ↓
+Break
+   ↓
+Debug
+   ↓
+Build
+   ↓
+Design
+   ↓
+Improve
+```
