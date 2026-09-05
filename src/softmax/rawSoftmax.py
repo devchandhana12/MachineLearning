@@ -305,7 +305,7 @@ def softmax(logits):
     #
     # Logits can be:
     #
-    # -5
+    # -5'
     #  0
     #  4
     #
