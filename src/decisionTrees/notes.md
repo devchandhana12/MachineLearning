@@ -1,95 +1,151 @@
-# Decision Trees — Classification
+# Decision Tree Classification — Think Like the Algorithm
 
-## 1. Why Decision Trees?
+# 1. My Job
 
-Logistic Regression learns a linear decision boundary in the supplied feature space.
+I am a Decision Tree classifier.
 
-It works well when the relationship can be represented approximately as:
+I receive:
 
-z = w₁x₁ + w₂x₂ + ... + b
-
-But real-world relationships may be nonlinear or rule-like.
+X = input features
 
 Example:
+- Distance
+- Price
+- Hungry
 
-- If distance is low → customer may buy.
-- If distance is high but price is low → customer may still buy.
-- If distance is high and price is high → customer may not buy.
-
-A Decision Tree handles this by learning a hierarchy of feature-based questions.
+y = target
 
 Example:
-
-                    Distance <= 5?
-                    /            \
-                  Yes             No
-                  /                \
-             Hungry?             Price <= 200?
-              /  \                 /    \
-            Yes   No             Yes     No
+- Bought = Yes
+- Bought = No
 
 
-## 2. What Does a Decision Tree Learn?
+My job is to learn questions such as:
 
-Logistic Regression learns parameters:
-
-- weights (w)
-- bias (b)
-
-A Decision Tree learns a structure:
-
-- which feature to split on
-- what threshold/category to use
-- where each split appears
-- when splitting should stop
-- what each leaf predicts
-
-We do NOT manually write the rules.
-
-The algorithm discovers them from the training data.
+                Distance <= 5?
+                /            \
+              Yes             No
+              /                \
+         Hungry?            Price <= 200?
+          /   \               /       \
+        Yes    No           Yes        No
 
 
-# 3. Training Starts at the Root
+Unlike Logistic Regression, I do NOT learn:
 
-Suppose our target is:
+w1, w2, w3, b
 
-Bought Biryani = Yes / No
+I learn:
 
-At the beginning, all training samples are inside one node:
+- which feature to ask about
+- what threshold to use
+- where that question should appear
+- when to stop asking questions
+- what to predict at the leaves
 
-                    ROOT
 
-                  6 Yes
-                  4 No
+--------------------------------------------------
+2. WHY DO I EXIST?
+--------------------------------------------------
 
-The tree now needs to find a question that separates the classes better.
+Logistic Regression essentially learns:
+
+z = w1*x1 + w2*x2 + ... + b
+
+and creates a linear decision boundary in the supplied feature space.
+
+But relationships are not always linear.
+
+The real pattern might be:
+
+IF Distance <= 5:
+    likely BUY
+
+ELSE:
+    IF Price <= 200:
+        likely BUY
+    ELSE:
+        likely NOT BUY
+
+
+This is nonlinear and interaction-based.
+
+Instead of fitting one global linear equation, I divide the feature
+space into regions using questions.
+
+
+--------------------------------------------------
+3. I START WITH EVERYONE IN ONE NODE
+--------------------------------------------------
+
+Suppose my training data contains:
+
+10 customers
+
+6 YES
+4 NO
+
+
+Initially:
+
+                ROOT
+               6Y / 4N
+
+
+Now I need to ask:
+
+"What question should I ask first?"
+
 
 Possible questions:
 
-Distance <= 4.5?
+Distance <= 3?
+Distance <= 5?
 Price <= 250?
-Hungry == Yes?
-
-The main training problem is:
-
-"Which question produces the best separation?"
+Price <= 350?
+Hungry = Yes?
 
 
-# 4. Generating Questions for Numerical Features
+But I need a mathematical way to determine which question is best.
 
-Suppose Distance values in the training data are:
+
+--------------------------------------------------
+4. HOW I CREATE QUESTIONS FOR NUMERICAL FEATURES
+--------------------------------------------------
+
+Suppose Distance contains:
 
 1, 2, 3, 5, 7, 9
 
-There are infinitely many possible real-number thresholds.
 
-But the tree does NOT need to test all of them.
-
-First, sort the observed values:
+First I sort the observed values:
 
 1   2   3   5   7   9
 
-Consider thresholds between adjacent observed values:
+
+I don't need to test every real number.
+
+For example:
+
+Distance <= 3.1
+Distance <= 3.5
+Distance <= 3.9
+
+all produce:
+
+LEFT:
+1, 2, 3
+
+RIGHT:
+5, 7, 9
+
+
+They create exactly the same partition.
+
+So conceptually I only need meaningful boundaries between observed
+values.
+
+Possible representative thresholds:
 
 1.5
 2.5
@@ -97,7 +153,8 @@ Consider thresholds between adjacent observed values:
 6
 8
 
-Candidate questions become:
+
+Then I can test:
 
 Distance <= 1.5?
 Distance <= 2.5?
@@ -106,385 +163,455 @@ Distance <= 6?
 Distance <= 8?
 
 
-## Why Don't We Test Infinite Thresholds?
-
-Consider:
-
-Distance <= 3.1
-Distance <= 3.5
-Distance <= 3.9
-
-If the observed values are:
-
-1, 2, 3, 5, 7, 9
-
-all three thresholds produce exactly the same partition:
-
-LEFT:
-1, 2, 3
-
-RIGHT:
-5, 7, 9
-
-Therefore, testing all those thresholds would be redundant.
-
-We only need meaningful boundaries between observed values.
+With n unique values, there are roughly at most n-1 meaningful
+boundaries.
 
 
-## Do We Need Both <= 4 and > 4?
+--------------------------------------------------
+5. WHY I DON'T TEST BOTH <= AND >
+--------------------------------------------------
 
-No.
+Suppose I ask:
 
-Distance <= 4 automatically creates two branches:
-
-TRUE  → Distance <= 4
-FALSE → Distance > 4
-
-Testing "Distance > 4" separately would produce the same partition with
-the branches reversed.
+Distance <= 4?
 
 
-## What About Thresholds Like -4 or 5000?
+That automatically gives me:
 
-If all observed distances are positive:
+TRUE:
+Distance <= 4
 
-Distance <= -4
+FALSE:
+Distance > 4
+
+
+Testing:
+
+Distance > 4?
+
+would produce the same partition with the branch labels reversed.
+
+So there is no need to treat it as a fundamentally different split.
+
+
+--------------------------------------------------
+6. WHAT ABOUT USELESS THRESHOLDS?
+--------------------------------------------------
+
+Suppose all observed distances are between 1 and 10.
+
+Question:
+
+Distance <= -500?
 
 would produce:
 
-LEFT  = empty
-RIGHT = everyone
+LEFT  = nobody
+RIGHT = everybody
+
 
 Similarly:
 
-Distance <= 5000
+Distance <= 5000?
 
 might produce:
 
-LEFT  = everyone
-RIGHT = empty
-
-These do not meaningfully partition the training samples.
+LEFT  = everybody
+RIGHT = nobody
 
 
-# 5. What Makes a Split Good?
-
-Suppose we have:
-
-                    ROOT
-
-                  3 Yes
-                  3 No
-
-Consider two questions.
-
-Split A:
-
-LEFT                RIGHT
-
-3 Yes               0 Yes
-0 No                3 No
-
-This produces very pure groups.
-
-Split B:
-
-LEFT                RIGHT
-
-2 Yes               1 Yes
-1 No                2 No
-
-These groups are still mixed.
-
-Humans can visually recognize that Split A is better.
-
-A computer needs a numerical measure.
-
-This creates the need for an impurity metric.
+I care about questions that actually partition my training samples.
 
 
-# 6. Gini Impurity
+--------------------------------------------------
+7. NOW I HAVE MANY POSSIBLE QUESTIONS
+--------------------------------------------------
 
-Gini impurity measures how mixed the class labels are inside ONE node.
+Maybe I have:
 
-Formula:
+Distance <= 1.5?
+Distance <= 2.5?
+Distance <= 4?
+...
 
-Gini = 1 - Σ(pᵢ²)
+Price <= 175?
+Price <= 225?
+Price <= 275?
+...
 
-where pᵢ is the proportion of class i inside the node.
-
-
-## Pure Node
-
-10 Yes
-0 No
-
-p(Yes) = 1
-p(No)  = 0
-
-Gini = 1 - (1² + 0²)
-      = 0
-
-A pure node has Gini = 0.
+Hungry = Yes?
 
 
-## Completely Mixed Binary Node
+Now I need to determine:
 
-5 Yes
-5 No
-
-p(Yes) = 0.5
-p(No)  = 0.5
-
-Gini = 1 - (0.5² + 0.5²)
-      = 0.5
-
-For binary classification, 50/50 gives the maximum Gini of 0.5.
+WHICH QUESTION CREATES BETTER CLASS SEPARATION?
 
 
-## Example
+To answer that, I need to measure how mixed a node is.
 
-8 Yes
-2 No
 
-p(Yes) = 0.8
-p(No)  = 0.2
+--------------------------------------------------
+8. GINI IMPURITY
+--------------------------------------------------
 
-Gini = 1 - (0.8² + 0.2²)
-      = 1 - (0.64 + 0.04)
-      = 0.32
+Suppose a node contains:
+
+10 YES
+0 NO
+
+
+This node is perfectly pure.
+
+
+Another node:
+
+5 YES
+5 NO
+
+
+This node is highly mixed.
+
+
+I need one number representing that mixedness.
+
+One possible measure is Gini impurity:
+
+Gini = 1 - sum(p_k^2)
+
+where:
+
+p_k = proportion belonging to class k
+
+
+Example:
+
+8 YES
+2 NO
+
+
+p(YES) = 0.8
+p(NO)  = 0.2
+
+
+Gini:
+
+1 - (0.8^2 + 0.2^2)
+
+= 1 - (0.64 + 0.04)
+
+= 0.32
+
+
+Some useful binary examples:
+
+10Y / 0N -> Gini = 0
+
+9Y / 1N -> Gini = 0.18
+
+8Y / 2N -> Gini = 0.32
+
+5Y / 5N -> Gini = 0.50
 
 
 Therefore:
 
-10Y / 0N → Gini = 0
-9Y  / 1N → Gini = 0.18
-8Y  / 2N → Gini = 0.32
-5Y  / 5N → Gini = 0.50
-
-Lower Gini = purer node.
-Higher Gini = more mixed node.
+LOW GINI
+=
+PURE
 
 
-## Important
-
-Gini measures ONE NODE.
-
-A split creates multiple child nodes, so each child gets its own Gini.
+HIGH GINI
+=
+MIXED
 
 
-# 7. Evaluating a Candidate Split
+Important:
 
-Suppose the parent contains:
+GINI DESCRIBES ONE NODE.
 
-6 Yes
-4 No
+It does not directly describe an entire tree level.
+
+
+--------------------------------------------------
+9. I EVALUATE A CANDIDATE QUESTION
+--------------------------------------------------
+
+Suppose my parent node contains:
+
+6 YES
+4 NO
+
 
 Parent Gini:
 
-p(Yes) = 0.6
-p(No)  = 0.4
+1 - (0.6^2 + 0.4^2)
 
-Gini(parent)
-= 1 - (0.6² + 0.4²)
 = 0.48
 
 
-Suppose we test:
+Now I test:
 
 Distance <= 5.5?
 
-and obtain:
+
+It creates:
+
 
 LEFT:
 
-4 Yes
-1 No
+4 YES
+1 NO
 
-Gini(left) = 0.32
+Gini = 0.32
 
 
 RIGHT:
 
-2 Yes
-3 No
+2 YES
+3 NO
 
-Gini(right) = 0.48
-
-
-We now have two child Ginis.
-
-We need ONE score representing the entire split.
+Gini = 0.48
 
 
-# 8. Weighted Child Impurity
+Now I have two child impurities.
 
-We cannot simply average child Ginis because the children may contain
-different numbers of samples.
+But I need ONE score representing the entire split.
 
-Example:
+
+--------------------------------------------------
+10. WHY I WEIGHT CHILD IMPURITY
+--------------------------------------------------
+
+Suppose:
 
 LEFT:
 1 customer
 Gini = 0
 
+
 RIGHT:
 99 customers
 Gini = 0.5
 
-A simple average would give:
 
-(0 + 0.5) / 2 = 0.25
+I should NOT calculate:
 
-This gives the 1-customer node the same importance as the 99-customer node,
-which is misleading.
+(0 + 0.5) / 2
 
-Therefore, child impurity is weighted by the number of samples.
 
-Weighted Child Impurity:
+That treats the 1-customer group as equally important as the
+99-customer group.
 
-(N_left / N) × Gini_left
+
+Instead:
+
+Weighted Child Impurity
+
+=
+
+(N_left / N) * Gini_left
+
 +
-(N_right / N) × Gini_right
+
+(N_right / N) * Gini_right
 
 
-Example:
-
-Parent = 10 customers
+For our earlier 5/5 example:
 
 LEFT:
-5 customers
+5 samples
 Gini = 0.32
 
 RIGHT:
-5 customers
+5 samples
 Gini = 0.48
+
 
 Weighted impurity:
 
 (5/10)(0.32) + (5/10)(0.48)
 
-= 0.16 + 0.24
-
 = 0.40
 
 
-# 9. Impurity Reduction
+--------------------------------------------------
+11. DID THE QUESTION ACTUALLY HELP?
+--------------------------------------------------
 
-Before the split:
+Before asking the question:
 
-Parent Gini = 0.48
+Parent impurity = 0.48
 
-After the split:
 
-Weighted Child Impurity = 0.40
+After asking the question:
+
+Weighted child impurity = 0.40
+
 
 Therefore:
 
 Impurity Reduction
-= Parent Impurity - Weighted Child Impurity
+
+=
+
+Parent Impurity
+-
+Weighted Child Impurity
+
 
 = 0.48 - 0.40
 
 = 0.08
 
 
-A candidate that produces a larger impurity reduction is preferred.
+So this question improved class separation by 0.08.
 
 
-# 10. How the Best Split Is Selected
+--------------------------------------------------
+12. I DO THIS FOR EVERY CANDIDATE
+--------------------------------------------------
 
-At a node, the tree conceptually evaluates candidate questions such as:
+For each candidate question:
 
-Distance <= 1.5
-Distance <= 2.5
-Distance <= 3.5
-...
-
-Price <= 175
-Price <= 225
-Price <= 275
-...
-
-Hungry == Yes
-
-For every candidate:
-
-1. Partition the training rows.
-2. Calculate Gini for the left child.
-3. Calculate Gini for the right child.
-4. Calculate weighted child impurity.
-5. Calculate impurity reduction.
-
-Conceptually:
-
-Candidate Question
-       ↓
-Split Rows
-       ↓
-Child Ginis
-       ↓
-Weighted Child Impurity
-       ↓
-Parent Impurity - Child Impurity
-       ↓
-Impurity Reduction
-
-The candidate with the best impurity reduction is selected.
-
-Only then does the tree commit to that split.
+                Candidate
+                    |
+                    v
+               Split rows
+                    |
+                    v
+            Calculate child
+                 Ginis
+                    |
+                    v
+             Weight children
+             by sample count
+                    |
+                    v
+        Weighted Child Impurity
+                    |
+                    v
+ Parent Impurity - Child Impurity
+                    |
+                    v
+          Impurity Reduction
 
 
-# 11. Recursive Tree Growth
+Suppose:
 
-Suppose the root chooses:
+Distance <= 4   -> improvement 0.07
 
-                    Distance <= 5.5?
-                    /              \
-                 LEFT              RIGHT
+Distance <= 6   -> improvement 0.12
 
-                4Y / 1N           2Y / 3N
+Price <= 250    -> improvement 0.21
 
-Neither child is pure.
+Hungry = Yes    -> improvement 0.09
 
-The root's job is now finished.
 
-The LEFT child becomes its own smaller Decision Tree problem.
+I choose:
 
-Using only the rows that reached LEFT:
+Price <= 250
 
-1. Calculate current impurity.
-2. Generate candidate questions.
-3. Evaluate their impurity reductions.
-4. Choose the best split.
-5. Create children.
 
-The RIGHT child independently does the same thing.
+because:
 
-Therefore, Decision Tree training is recursive.
+0.21
+
+is the largest improvement.
+
+
+--------------------------------------------------
+13. IMPORTANT: I AM GREEDY
+--------------------------------------------------
+
+I choose the best split AVAILABLE RIGHT NOW.
+
+I do not normally search every possible future tree and find the
+globally perfect tree.
+
+I ask:
+
+"Which split looks best at this node right now?"
+
+
+Then I commit to it.
+
+
+That is why Decision Tree training is called GREEDY.
+
+
+--------------------------------------------------
+14. AFTER CHOOSING THE ROOT, I REPEAT
+--------------------------------------------------
+
+Suppose I choose:
+
+                    Price <= 250?
+                    /           \
+                 LEFT           RIGHT
+
+                4Y/1N           2Y/3N
+
+
+Now the root's job is finished.
+
+
+I take LEFT:
+
+4Y / 1N
+
+
+and treat it as another Decision Tree problem.
+
+
+I again:
+
+- generate candidate questions
+- calculate impurities
+- calculate impurity reductions
+- choose the best split
+
+
+Separately, RIGHT does the same thing.
+
+
+Therefore my growth is RECURSIVE.
 
 
 Conceptually:
 
 BUILD_TREE(rows):
 
-    inspect current node
-
-    if stopping condition:
+    if I should stop:
         create leaf
 
     otherwise:
+
         generate candidate splits
-        evaluate candidate splits
+
+        evaluate them
+
         choose best split
 
         BUILD_TREE(left_rows)
+
         BUILD_TREE(right_rows)
 
 
-# 12. Features Can Be Reused
+--------------------------------------------------
+15. I CAN REUSE FEATURES
+--------------------------------------------------
 
-Using Distance at the root does NOT mean Distance is unavailable later.
+Suppose I already used:
+
+Distance <= 8?
+
+at the root.
+
+
+Later I can still ask:
+
+Distance <= 3?
+
 
 Example:
 
@@ -492,477 +619,1315 @@ Example:
                     /
               Distance <= 3?
 
-The same numerical feature can be used multiple times.
 
-Each split isolates a different region of the feature space.
+Features are NOT consumed after being used once.
 
-When processing a child node, candidate thresholds are generated using
-the samples that reached that node.
+Different thresholds can isolate different regions.
 
 
-# 13. Trees Do Not Need Balanced Levels
+--------------------------------------------------
+16. MY TREE DOES NOT NEED TO BE BALANCED
+--------------------------------------------------
 
-Decision Trees should be thought of node-by-node, not level-by-level.
-
-Example:
+I might grow like this:
 
                          ROOT
-                       /      \
-                    LEAF      split
-                              /   \
-                           LEAF   split
-                                  /   \
-                               LEAF   LEAF
-
-One branch may become a leaf early while another continues growing.
-
-All leaves do NOT need to have the same depth.
+                        /    \
+                     LEAF    NODE
+                            /    \
+                         LEAF    NODE
+                                /    \
+                             LEAF    LEAF
 
 
-# 14. Leaf Prediction
+One branch may stop very early.
 
-A leaf does not have to be pure.
-
-Suppose training stops at:
-
-8 Yes
-2 No
-
-The predicted class is normally the majority class:
-
-Predict → YES
-
-Estimated probabilities:
-
-P(Yes) = 8/10 = 0.8
-P(No)  = 2/10 = 0.2
-
-This is the basic idea behind a classification tree's predict_proba().
-
-Logistic Regression probability:
-
-w·x + b
-   ↓
-sigmoid
-   ↓
-probability
-
-Decision Tree probability:
-
-new sample
-   ↓
-traverse tree
-   ↓
-reach leaf
-   ↓
-class distribution of training samples in that leaf
-   ↓
-probability
+Another may continue deeper.
 
 
-# 15. Why Decision Trees Overfit
+I grow NODE BY NODE.
 
-A tree can continue splitting as long as it finds ways to reduce training
-impurity.
+I do not need every branch to have the same depth.
 
-Eventually it may create highly specific rules such as:
 
-Age <= 31.5
-    ↓
-Distance > 3.72
-    ↓
-Price <= 287
-    ↓
-Age > 27.5
-    ↓
-1 training customer
+--------------------------------------------------
+17. WHEN DO I CREATE A LEAF?
+--------------------------------------------------
 
-That leaf may have:
+One obvious case:
 
-1 Yes
-0 No
+20 YES
+0 NO
+
 
 Gini = 0
 
-Training fit improved.
 
-But the tree may simply have memorized one unusual training example.
+There is no impurity left to reduce.
 
-The real goal is NOT:
-
-"Make training impurity as small as possible."
-
-The real goal is:
-
-"Generalize well to unseen data."
+So I can stop.
 
 
-As tree complexity increases:
-
-Training error generally decreases.
-
-Validation performance may initially improve, then worsen.
-
-This is overfitting.
+But a leaf does NOT have to be pure.
 
 
-# 16. Pre-Pruning
+I might stop at:
 
-Pre-pruning controls tree growth DURING training.
+8 YES
+2 NO
 
-Instead of allowing the tree to grow freely, we impose stopping rules.
+
+because:
+
+- max depth was reached
+- too few samples remain
+- improvement is too small
+- pruning/regularization constraints stop me
 
 
-## max_depth
+--------------------------------------------------
+18. WHAT DOES A LEAF PREDICT?
+--------------------------------------------------
 
-Limits how deep the tree may grow.
+Suppose a leaf contains:
 
-Example:
+8 YES
+2 NO
+
+
+For classification:
+
+Predicted class:
+
+YES
+
+
+because YES is the majority class.
+
+
+The class distribution also gives:
+
+P(YES) = 8/10 = 0.8
+
+P(NO) = 2/10 = 0.2
+
+
+Conceptually:
+
+NEW CUSTOMER
+      |
+      v
+Start at root
+      |
+      v
+Answer questions
+      |
+      v
+Follow branches
+      |
+      v
+Reach leaf
+      |
+      v
+Use leaf's class distribution
+
+
+This is fundamentally different from Logistic Regression.
+
+
+LOGISTIC REGRESSION:
+
+x
+|
+v
+w*x + b
+|
+v
+sigmoid
+|
+v
+probability
+
+
+DECISION TREE:
+
+x
+|
+v
+follow learned questions
+|
+v
+reach leaf
+|
+v
+leaf class distribution
+
+
+--------------------------------------------------
+19. I DON'T USE GRADIENT DESCENT
+--------------------------------------------------
+
+I do NOT have:
+
+- learning rate
+- epochs
+- backpropagation
+- gradient descent
+- learned weights/bias like Logistic Regression
+
+
+My learning mechanism is:
+
+SEARCH FOR SPLITS.
+
+
+At every node:
+
+"Which available question produces the best impurity reduction?"
+
+
+--------------------------------------------------
+20. MY BIG PROBLEM: I CAN OVERFIT LIKE CRAZY
+--------------------------------------------------
+
+Suppose I keep growing.
+
+
+Eventually I might learn:
+
+Age <= 31.5
+    |
+Distance > 3.72
+    |
+Price <= 287
+    |
+Age > 27.5
+    |
+one specific customer
+
+
+Maybe:
+
+1 YES
+0 NO
+
+
+Beautiful.
+
+Gini = 0.
+
+
+But I may simply have memorized that customer.
+
+
+My training accuracy can become:
+
+99-100%
+
+
+while validation accuracy is much worse.
+
+
+The problem:
+
+I am extremely flexible.
+
+If you allow me to keep splitting, I can create increasingly tiny
+regions around training observations.
+
+
+So we need to control my complexity.
+
+
+==================================================
+PART 2 — PRE-PRUNING
+==================================================
+
+Pre-pruning means:
+
+CONTROL ME WHILE I AM GROWING.
+
+
+--------------------------------------------------
+21. max_depth
+--------------------------------------------------
+
+You tell me:
 
 max_depth = 3
 
-means no path may grow beyond depth 3.
 
-It is a maximum, not a required depth.
+I interpret:
 
-A branch can stop earlier if appropriate.
+"No path may grow beyond depth 3."
 
 
-## min_samples_split
+Even if I discover another potentially useful split at depth 3,
+I must stop.
 
-Minimum number of samples required in a node before the algorithm is
-allowed to attempt another split.
 
-Example:
+Important:
+
+max_depth = 3
+
+does NOT mean every branch must reach depth 3.
+
+
+It means:
+
+maximum allowed depth = 3.
+
+
+--------------------------------------------------
+22. min_samples_split
+--------------------------------------------------
+
+Suppose:
 
 min_samples_split = 10
 
-Node has 50 samples → may attempt splitting.
-Node has 6 samples  → cannot split.
+
+I arrive at a node containing:
+
+8 samples
 
 
-## min_samples_leaf
+I think:
 
-Controls the minimum number of samples allowed in resulting leaves.
+"I am not even allowed to attempt another split."
 
-Suppose a node has 100 samples.
+So I create a leaf.
 
-A candidate split creates:
+
+This parameter asks:
+
+IS THE PARENT LARGE ENOUGH TO SPLIT?
+
+
+--------------------------------------------------
+23. min_samples_leaf
+--------------------------------------------------
+
+Suppose my parent contains:
+
+100 samples.
+
+
+A candidate split produces:
 
 LEFT  = 1 sample
 RIGHT = 99 samples
 
-Even though the parent was large enough to split, this can create a
-tiny region that memorizes training data.
 
-min_samples_leaf prevents such splits.
+Technically, this might improve training impurity.
 
-
-Difference:
-
-min_samples_split:
-"Is the parent large enough to attempt splitting?"
-
-min_samples_leaf:
-"Will the resulting leaves be large enough?"
+But that 1-sample region smells like memorization.
 
 
-## min_impurity_decrease
+If:
+
+min_samples_leaf = 10
+
+
+this split is illegal.
+
+
+So remember:
+
+
+min_samples_split
+
+asks:
+
+"Is my PARENT large enough to attempt splitting?"
+
+
+min_samples_leaf
+
+asks:
+
+"Would my resulting LEAVES contain enough samples?"
+
+
+--------------------------------------------------
+24. min_impurity_decrease
+--------------------------------------------------
 
 Suppose:
 
 Parent impurity = 0.4200
-Child impurity  = 0.4199
 
-Improvement = 0.0001
-
-Technically the split improves training impurity, but the improvement
-may be too small to justify additional complexity.
-
-min_impurity_decrease allows us to require a meaningful improvement
-before creating another split.
+Best child impurity = 0.4199
 
 
-## max_leaf_nodes
+Improvement:
 
-Limits the total number of final leaf nodes.
-
-More leaves mean more separate prediction regions and therefore greater
-model flexibility.
-
-This is another way of controlling model complexity.
+0.0001
 
 
-# 17. Why Pure Nodes Stop
+Technically:
 
-Suppose a node contains:
-
-20 Yes
-0 No
-
-Gini = 0
-
-There is no impurity left to reduce.
-
-Further splitting cannot improve class purity.
-
-Therefore, the node can become a leaf.
-
-However, nodes do NOT need to become pure before stopping.
-
-Pre-pruning constraints may intentionally stop at mixed nodes to reduce
-overfitting.
+YES, I improved.
 
 
-# 18. Post-Pruning
+But did I improve enough to justify another branch?
 
-Pre-pruning says:
 
-"Don't grow unnecessary complexity."
+If:
 
-Post-pruning takes another approach:
+min_impurity_decrease = 0.01
 
-"Grow a larger tree first, then remove branches whose benefit does not
-justify their complexity."
+
+then:
+
+0.0001 < 0.01
+
+
+I stop.
+
+
+--------------------------------------------------
+25. max_leaf_nodes
+--------------------------------------------------
+
+Instead of limiting my depth, you can limit the total number of
+prediction regions I create.
 
 
 Example:
 
-Before pruning:
-
-                 NODE
-                   |
-                 split
-                /     \
-             split    leaf
-             /   \
-           leaf  leaf
+max_leaf_nodes = 4
 
 
-After pruning:
-
-                 NODE
-                   ↓
-                 LEAF
+I may create at most four terminal leaves.
 
 
-The simpler tree may fit the training data slightly worse but generalize
+These two trees can both have four leaves:
+
+
+Balanced-ish:
+
+                ROOT
+               /    \
+             NODE   NODE
+             / \    / \
+            L   L  L   L
+
+
+Unbalanced:
+
+                ROOT
+               /    \
+              L     NODE
+                    /  \
+                   L   NODE
+                       / \
+                      L   L
+
+
+Same number of leaves.
+
+Different depth/shape.
+
+
+So:
+
+max_depth
+
+controls PATH DEPTH.
+
+
+max_leaf_nodes
+
+controls TOTAL FINAL REGIONS.
+
+
+--------------------------------------------------
+26. THE WEAKNESS OF PRE-PRUNING
+--------------------------------------------------
+
+Now an important question:
+
+"If pre-pruning exists, why would I need post-pruning?"
+
+
+Because pre-pruning makes decisions EARLY.
+
+
+Suppose I see:
+
+                    NODE
+                     |
+                   Split A
+                  /       \
+              30Y/20N    25Y/25N
+
+
+Split A itself gives only modest improvement.
+
+
+A strict pre-pruning rule might tell me:
+
+"Not good enough. STOP."
+
+
+But suppose I had been allowed to continue:
+
+
+                    Split A
+                   /       \
+              30Y/20N      ...
+                 |
+              Split B
+              /     \
+           28Y/2N   2Y/18N
+
+
+Now we discovered very useful deeper structure.
+
+
+Pre-pruning could have prevented me from ever discovering it.
+
+
+So:
+
+PRE-PRUNING:
+
+"Should I allow this structure to grow?"
+
+
+POST-PRUNING:
+
+"I already saw what this structure became.
+Was it actually worth keeping?"
+
+
+==================================================
+PART 3 — POST-PRUNING
+==================================================
+
+--------------------------------------------------
+27. LET ME GROW FIRST
+--------------------------------------------------
+
+Suppose I already built:
+
+                     NODE B
+                     4Y / 2N
+                        |
+                  Hungry = Yes?
+                  /          \
+               4Y/0N        0Y/2N
+
+
+Training fit is excellent.
+
+Both children are pure.
+
+
+Post-pruning asks:
+
+"What if I remove Hungry = Yes?"
+
+
+Then:
+
+                     NODE B
+                     4Y / 2N
+                        |
+                        v
+                       LEAF
+
+
+I lose some training fit.
+
+But I also become simpler.
+
+
+This is the fundamental tradeoff:
+
+BETTER TRAINING FIT
+
+vs
+
+LOWER MODEL COMPLEXITY
+
+
+--------------------------------------------------
+28. COST-COMPLEXITY PRUNING
+--------------------------------------------------
+
+I need an objective that cares about BOTH.
+
+
+Let:
+
+R(T)
+
+represent my training fit cost / impurity cost.
+
+
+Let:
+
+|T|
+
+represent my complexity, commonly expressed through the number of
+terminal leaves.
+
+
+If I only minimize:
+
+R(T)
+
+
+then larger trees usually win because they can fit training data
 better.
 
 
-# 19. Cost-Complexity Pruning
+So we introduce a complexity penalty.
 
-Cost-complexity pruning balances:
 
-1. How well the tree fits the training data.
-2. How complex the tree is.
+Cost-complexity objective:
 
-Conceptually:
+R_alpha(T)
 
-Tree Cost
 =
-Training Fit Cost
+
+R(T) + alpha * |T|
+
+
+Read it as:
+
+TOTAL COST
+
+=
+
+TRAINING FIT COST
+
 +
-alpha × Tree Complexity
+
+PRICE OF COMPLEXITY
 
 
-Common notation:
-
-R_alpha(T) = R(T) + alpha × |T|
-
-where:
-
-T       = tree
-R(T)    = training fit/impurity cost
-|T|     = number of terminal leaves
-alpha   = penalty applied to complexity
+alpha determines how expensive complexity is.
 
 
-If alpha is very small:
+--------------------------------------------------
+29. I AM THE ALGORITHM — SHOULD I KEEP THIS BRANCH?
+--------------------------------------------------
 
-Complexity is cheap.
-Larger trees are tolerated.
+Suppose KEEPING a subtree gives:
 
-If alpha increases:
+Training cost = 0.10
 
-Complexity becomes more expensive.
-More branches must justify their existence.
+Leaves = 2
+
+
+Let:
+
+alpha = 0.05
+
+
+Then:
+
+Total cost
+
+= 0.10 + (0.05)(2)
+
+= 0.20
+
+
+Now suppose I PRUNE it.
+
+
+Training cost becomes:
+
+0.13
+
+
+because I lost useful training structure.
+
+
+But now:
+
+Leaves = 1
+
+
+Total:
+
+0.13 + (0.05)(1)
+
+= 0.18
+
+
+Compare:
+
+KEEP  = 0.20
+
+PRUNE = 0.18
+
+
+Lower wins.
+
 
 Therefore:
 
-alpha ↑ → generally more pruning
-alpha ↓ → generally less pruning
+PRUNE.
 
-In sklearn:
+
+My reasoning:
+
+"Keeping this branch improves training fit by only 0.03,
+but the additional complexity costs me 0.05.
+
+Bad deal."
+
+
+--------------------------------------------------
+30. WHAT DOES alpha MEAN?
+--------------------------------------------------
+
+alpha is essentially:
+
+HOW EXPENSIVE DO WE CONSIDER TREE COMPLEXITY?
+
+
+If:
+
+alpha = 0
+
+
+then:
+
+R_alpha(T) = R(T)
+
+
+Complexity has no penalty in this objective.
+
+
+Training fit dominates.
+
+
+Small alpha:
+
+complexity is cheap
+
+-> larger tree tolerated
+
+
+Large alpha:
+
+complexity is expensive
+
+-> branches need to provide significant benefit
+
+-> more pruning
+
+
+Therefore:
+
+alpha increases
+        |
+        v
+stronger complexity penalty
+        |
+        v
+generally more pruning
+
+
+--------------------------------------------------
+31. SAME BRANCH, DIFFERENT alpha
+--------------------------------------------------
+
+Suppose:
+
+KEEP:
+
+Training cost = 0.10
+Leaves = 2
+
+
+PRUNE:
+
+Training cost = 0.13
+Leaves = 1
+
+
+Now:
+
+alpha = 0.01
+
+
+KEEP:
+
+0.10 + 0.01(2)
+
+= 0.12
+
+
+PRUNE:
+
+0.13 + 0.01(1)
+
+= 0.14
+
+
+Now:
+
+KEEP = 0.12
+
+PRUNE = 0.14
+
+
+KEEP wins.
+
+
+Why?
+
+
+The extra complexity costs only:
+
+0.01
+
+
+while it improves training fit by:
+
+0.03
+
+
+Good deal.
+
+
+So the same subtree may be:
+
+worth keeping for small alpha
+
+but
+
+not worth keeping for larger alpha.
+
+
+--------------------------------------------------
+32. BUT I HAVE MANY SUBTREES — WHICH ONE GOES FIRST?
+--------------------------------------------------
+
+Suppose I have:
+
+                         ROOT
+                       /      \
+                      A        B
+                    /  \      / \
+                   L    C    D   L
+                       / \  / \
+                      L  L L   E
+                             / \
+                            L   L
+
+
+I could potentially prune:
+
+C
+D
+E
+
+
+I should not randomly choose one.
+
+
+I need to ask:
+
+"Which subtree gives me the least useful fit improvement relative to
+the complexity it adds?"
+
+
+This leads to weakest-link pruning.
+
+
+--------------------------------------------------
+33. WEAKEST-LINK PRUNING
+--------------------------------------------------
+
+Consider subtree C.
+
+
+If pruning C causes:
+
+training cost:
+
+0.20 -> 0.22
+
+
+then fit lost:
+
+0.02
+
+
+Suppose pruning removes:
+
+1 leaf worth of extra complexity.
+
+
+Loss per complexity removed:
+
+0.02 / 1
+
+= 0.02
+
+
+---------------------
+
+
+Now subtree D.
+
+
+Training cost:
+
+0.20 -> 0.24
+
+
+Fit lost:
+
+0.04
+
+
+But pruning D removes:
+
+2 units of leaf complexity.
+
+
+Therefore:
+
+0.04 / 2
+
+= 0.02
+
+
+---------------------
+
+
+Now subtree E.
+
+
+Training cost:
+
+0.20 -> 0.205
+
+
+Fit lost:
+
+0.005
+
+
+Complexity removed:
+
+1
+
+
+Therefore:
+
+0.005 / 1
+
+= 0.005
+
+
+Compare:
+
+C -> 0.020
+
+D -> 0.020
+
+E -> 0.005
+
+
+E gives me the LEAST training-fit benefit per unit of complexity.
+
+
+Therefore E is my weakest link.
+
+
+I prune E first.
+
+
+--------------------------------------------------
+34. WHAT WEAKEST-LINK REALLY MEANS
+--------------------------------------------------
+
+Conceptually, for each subtree I ask:
+
+FIT LOST IF I REMOVE IT
+------------------------
+COMPLEXITY REMOVED
+
+
+Small value means:
+
+"I can simplify myself quite cheaply.
+
+I lose very little useful training fit."
+
+
+Large value means:
+
+"Careful.
+
+This subtree is providing significant training fit for its complexity."
+
+
+So the weakest subtree gets removed first.
+
+
+--------------------------------------------------
+35. CONNECTION BETWEEN WEAKEST-LINK AND alpha
+--------------------------------------------------
+
+Suppose a subtree provides approximately:
+
+0.005
+
+fit benefit per extra unit of complexity.
+
+
+If:
+
+alpha = 0.001
+
+
+complexity costs less than the benefit.
+
+
+KEEP.
+
+
+But if:
+
+alpha = 0.01
+
+
+I'm paying:
+
+0.01
+
+
+for something giving approximately:
+
+0.005
+
+
+Not worth it.
+
+
+PRUNE.
+
+
+Therefore weakest-link pruning effectively identifies when different
+subtrees stop being worth their complexity as the complexity penalty
+increases.
+
+
+--------------------------------------------------
+36. THE PRUNING PATH
+--------------------------------------------------
+
+Start with a large tree.
+
+
+As complexity becomes more expensive:
+
+                LARGE TREE
+                     |
+                     v
+            prune weakest link
+                     |
+                     v
+              smaller tree
+                     |
+                     v
+            prune next weak link
+                     |
+                     v
+              smaller tree
+                     |
+                     v
+                    ...
+
+
+Eventually we can obtain a sequence of progressively simpler trees.
+
+
+This is the cost-complexity pruning path.
+
+
+In sklearn, the relevant parameter is:
 
 ccp_alpha
 
 
-# 20. Weakest-Link Pruning
+--------------------------------------------------
+37. WHICH PRUNED TREE DO WE ACTUALLY WANT?
+--------------------------------------------------
 
-Not every branch contributes equally.
+The largest tree is not automatically best.
 
-Some subtrees produce large improvements in fit.
-
-Others produce tiny improvements while adding significant complexity.
-
-Cost-complexity pruning can progressively remove weak subtrees.
-
-Conceptually:
-
-Large Tree
-    ↓
-remove weakest subtree
-    ↓
-Smaller Tree
-    ↓
-remove next weakest subtree
-    ↓
-Smaller Tree
-    ↓
-...
+The smallest tree is not automatically best either.
 
 
-This creates a sequence of candidate tree complexities.
+Suppose:
+
+alpha      Leaves     Train Acc     Validation Acc
+
+0          90         100%          75%
+
+0.002      45          97%          81%
+
+0.008      18          93%          85%
+
+0.020       7          86%          82%
 
 
-# 21. Choosing the Pruned Tree
+Initially:
 
-We should not choose the final tree only by training performance.
+too complex
+-> overfitting
 
-Example:
 
-Tree A:
-Train Accuracy = 100%
-Validation Accuracy = 76%
+Then:
 
-Tree B:
-Train Accuracy = 94%
-Validation Accuracy = 85%
+remove noisy complexity
+-> validation improves
 
-Tree B may generalize better even though its training accuracy is lower.
 
-Validation data or cross-validation can be used to select an appropriate
-tree complexity / ccp_alpha.
+Eventually:
 
-The goal is not:
+too much pruning
+-> useful patterns disappear
+-> underfitting
 
-"Find the smallest tree."
+
+Therefore the goal is NOT:
+
+"Prune as much as possible."
+
 
 The goal is:
 
-"Find a tree complex enough to learn useful patterns but not so complex
-that it memorizes training noise."
+FIND THE COMPLEXITY THAT GENERALIZES WELL.
 
 
-# 22. Pre-Pruning vs Post-Pruning
-
-PRE-PRUNING
-
-Control complexity while the tree is growing.
-
-Examples:
-
-- max_depth
-- min_samples_split
-- min_samples_leaf
-- min_impurity_decrease
-- max_leaf_nodes
+Validation data or cross-validation can help us choose the appropriate
+tree complexity / ccp_alpha.
 
 
-POST-PRUNING
+==================================================
+PART 4 — THE ENTIRE ALGORITHM IN MY HEAD
+==================================================
 
-Allow a larger tree to grow and then remove weak/unnecessary subtrees.
+I receive:
 
-Main concept covered:
-
-- Cost-Complexity Pruning
-- ccp_alpha
-
-
-Both approaches attempt to improve generalization by controlling model
-complexity.
+X, y
 
 
-# 23. Complete Mental Model So Far
+I place all training rows at the root.
 
-At every node:
 
-Training rows arrive
-        ↓
-Calculate current impurity
-        ↓
-Check stopping conditions
-        ↓
-Generate candidate feature questions
-        ↓
-For numerical features:
-sort observed values and generate meaningful thresholds
-        ↓
-For each candidate:
-partition rows
-        ↓
-calculate child Ginis
-        ↓
-calculate weighted child impurity
-        ↓
+At the current node:
+
+        |
+        v
+
+How mixed are my labels?
+
+        |
+        v
+
+Calculate impurity.
+
+        |
+        v
+
+Should I stop?
+
+If yes:
+
+CREATE LEAF.
+
+
+If no:
+
+        |
+        v
+
+Generate candidate questions from available features.
+
+        |
+        v
+
+For every candidate:
+
+split rows
+        |
+        v
+calculate child impurities
+        |
+        v
+weight by child sizes
+        |
+        v
 calculate impurity reduction
-        ↓
-choose the best candidate
-        ↓
-commit the split
-       /     \
-      /       \
- left rows   right rows
-     ↓           ↓
-repeat        repeat
+
+        |
+        v
+
+Choose the best available split.
+
+        |
+        v
+
+Commit to it.
+
+        |
+        +----------------+
+        |                |
+        v                v
+    LEFT CHILD       RIGHT CHILD
+
+        |                |
+        v                v
+
+repeat recursively
 
 
-During growth:
+While growing:
 
-Pre-pruning controls complexity.
-
-
-After growth:
-
-Optional post-pruning can remove weak subtrees.
+pre-pruning constraints may stop me.
 
 
-During inference:
+After growing:
 
-New sample
-    ↓
-Start at root
-    ↓
-Answer learned questions
-    ↓
-Follow corresponding branches
-    ↓
-Reach leaf
-    ↓
-Return leaf prediction / class probabilities
+post-pruning may remove complexity whose training benefit does not
+justify keeping it.
 
 
-# Key Takeaway
+At inference:
 
-A Decision Tree is not trained by gradient descent.
+new sample
+    |
+    v
+root
+    |
+    v
+answer question
+    |
+    v
+follow branch
+    |
+    v
+answer next question
+    |
+    v
+...
+    |
+    v
+leaf
+    |
+    v
+class prediction / probability
 
-There are:
 
-- no learned weights like Logistic Regression
-- no learning rate
-- no epochs
-- no backpropagation
+==================================================
+PART 5 — IMPORTANT CHARACTERISTICS TO REMEMBER
+==================================================
 
-Instead, training is a greedy recursive search:
+1. I AM NONLINEAR
 
-"At this node, which available question gives me the best improvement
-in class separation?"
+Repeated splits create nonlinear, piecewise decision regions.
 
-The tree chooses that question, partitions the data, and repeats the same
-process independently inside the resulting child nodes.
 
-Its power comes from flexible nonlinear partitioning.
+2. I AUTOMATICALLY MODEL FEATURE INTERACTIONS
 
-Its major weakness is that this flexibility can easily lead to
-overfitting, which is why controlling tree complexity is essential.
+I can learn:
+
+IF Hungry = Yes:
+    THEN check Distance
+
+ELSE:
+    THEN check Price
+
+
+The effect of one feature can therefore depend on previous questions.
+
+
+3. I AM GREEDY
+
+I choose the best LOCAL split at each node.
+
+I do not normally search every possible complete tree.
+
+
+4. I DO NOT USE GRADIENT DESCENT
+
+No:
+
+- learning rate
+- epochs
+- backpropagation
+
+
+5. I CAN OVERFIT VERY EASILY
+
+Deep trees can memorize tiny training regions.
+
+
+6. MY LEAVES DO NOT NEED TO BE PURE
+
+Stopping rules may intentionally leave mixed leaves.
+
+
+7. FEATURES CAN APPEAR MULTIPLE TIMES
+
+Using Distance once does not consume it.
+
+
+8. MY BRANCHES CAN HAVE DIFFERENT DEPTHS
+
+Trees do not need to be balanced.
+
+
+9. MY PREDICTION COMES FROM THE REACHED LEAF
+
+For classification, majority class gives the class prediction and the
+leaf's class proportions provide probability estimates.
+
+
+==================================================
+PART 6 — FINAL MENTAL MODEL
+==================================================
+
+If I forget everything about Decision Trees, reconstruct it from this:
+
+"I am standing at a node containing training samples.
+
+My labels are mixed.
+
+Can I ask a feature-based question that separates these labels into
+cleaner groups?
+
+I generate possible questions.
+
+For each question, I calculate how impure the resulting groups are.
+
+I account for how many samples each child contains.
+
+I choose the question giving the largest useful impurity reduction.
+
+Then I repeat the exact same process independently inside each child.
+
+If you let me continue indefinitely, I can memorize the training data.
+
+So you control my complexity while I grow using pre-pruning, or allow
+me to grow further and later remove branches whose improvement in
+training fit is not worth their complexity using post-pruning.
+
+Once training is finished, a new sample simply follows my learned
+questions until it reaches a leaf."
+
+That is a Decision Tree classifier.
