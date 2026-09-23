@@ -1,0 +1,22 @@
+2026-09-24 01:52:36,063 | INFO | Decision tree criterion: gini
+2026-09-24 01:52:36,064 | INFO | Training rows: 891 | Test rows: 418
+2026-09-24 01:52:36,069 | INFO | Root Gini impurity: 0.472821
+2026-09-24 01:52:36,073 | INFO | Validation accuracy: 0.8156
+2026-09-24 01:52:36,092 | INFO | Validation weighted leaf Gini impurity: 0.215256
+2026-09-24 01:52:36,095 | INFO | Validation confusion matrix:
+[[95 15]
+ [18 51]]
+2026-09-24 01:52:36,109 | INFO | Validation classification report:
+              precision    recall  f1-score   support
+
+           0       0.84      0.86      0.85       110
+           1       0.77      0.74      0.76        69
+
+    accuracy                           0.82       179
+   macro avg       0.81      0.80      0.80       179
+weighted avg       0.81      0.82      0.81       179
+
+2026-09-24 01:52:36,159 | INFO | Final training root Gini impurity: 0.473013
+2026-09-24 01:52:36,160 | INFO | Test prediction counts: {0: 241, 1: 177}
+2026-09-24 01:52:36,160 | INFO | Test predictions written to: C:\Users\Chandana\Desktop\MachineLearning\src\decisionTrees\test_predictions.csv
+2026-09-24 01:52:36,161 | INFO | Gini results written to: C:\Users\Chandana\Desktop\MachineLearning\src\decisionTrees\decision_tree_results.log
