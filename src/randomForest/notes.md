@@ -1741,3 +1741,497 @@ The goal is NOT:
 The goal is:
 
 > **Build many useful, sufficiently decorrelated trees whose aggregation generalizes better than relying on one unstable Decision Tree.**
+
+# Advanced Random Forest — Practical Notes
+
+## Feature Importance
+
+Random Forest provides feature importance to understand which features the fitted model relied on.
+
+### 1. Mean Decrease in Impurity (MDI)
+
+Available in scikit-learn through:
+
+```python
+rf.feature_importances_
+```
+
+A feature is considered important when its splits produce large reductions in impurity across the forest.
+
+For classification:
+
+\[
+Gini = 1-\sum p_k^2
+\]
+
+Impurity reduction:
+
+\[
+\Delta Gini =
+Gini_{parent} - Gini_{children}^{weighted}
+\]
+
+Splits affecting more samples contribute more importance.
+
+### Problems with MDI
+
+**High-cardinality features**
+
+Features with many possible split points can receive inflated importance because the tree has more opportunities to find useful-looking splits.
+
+Examples:
+
+```text
+PassengerId
+CustomerID
+continuous/high-cardinality variables
+```
+
+**Correlated features**
+
+If two features contain similar information:
+
+```text
+MonthlySalary
+AnnualSalary
+```
+
+the model may use one instead of the other, causing importance to be divided or concentrated unpredictably.
+
+Therefore:
+
+> MDI describes how the fitted forest used features; it is not an objective measurement of real-world importance.
+
+---
+
+## 2. Permutation Importance
+
+Instead of examining tree splits, permutation importance asks:
+
+> How much does model performance deteriorate when the information in one feature is destroyed?
+
+Procedure:
+
+```text
+1. Calculate validation score
+2. Shuffle one feature
+3. Predict again
+4. Measure performance drop
+5. Repeat for other features
+```
+
+Conceptually:
+
+\[
+Importance_j =
+Score_{baseline} - Score_{permuted(j)}
+\]
+
+Example:
+
+```text
+Baseline accuracy        = 90%
+Shuffle Age              = 87%
+Importance of Age        ≈ 3 percentage-point drop
+
+Shuffle PassengerId      = 90%
+Importance               ≈ 0
+```
+
+A large performance drop suggests the fitted model depends strongly on that feature.
+
+### Advantages
+
+- Model-agnostic
+- Directly connected to predictive performance
+- Can be measured on validation/test data
+- Avoids some problems of impurity-based importance
+
+### Limitation: Correlated Features
+
+Suppose:
+
+```text
+AnnualSalary
+MonthlySalary
+```
+
+contain nearly identical information.
+
+Shuffle `AnnualSalary`:
+
+```text
+Model can still use MonthlySalary
+→ little performance drop
+```
+
+Shuffle `MonthlySalary`:
+
+```text
+Model can still use AnnualSalary
+→ little performance drop
+```
+
+Both may appear individually unimportant even though the underlying salary information is highly predictive.
+
+---
+
+## MDI vs Permutation Importance
+
+| MDI | Permutation |
+|---|---|
+| Based on impurity reduction | Based on performance degradation |
+| Tree-specific | Model-agnostic |
+| Very fast | More computationally expensive |
+| Calculated from fitted tree structure | Preferably evaluated on held-out data |
+| Can favor high-cardinality features | Less affected by split-count opportunity |
+| Correlated features can distort importance | Correlated features can hide importance |
+
+---
+
+## Feature Importance ≠ Causality
+
+A feature being important means:
+
+> The fitted model found the feature useful for prediction given the available data/features.
+
+It does NOT mean:
+
+\[
+X \rightarrow Y
+\]
+
+or prove that the feature causes the target.
+
+---
+
+# Practical Random Forest Tuning Strategy
+
+Do not blindly tune every hyperparameter.
+
+First compare:
+
+```text
+Training performance
+vs
+Validation / OOB performance
+```
+
+### High Variance / Overfitting
+
+```text
+Training score   → very high
+Validation score → significantly lower
+```
+
+Possible changes:
+
+```text
+max_depth ↓
+min_samples_leaf ↑
+min_samples_split ↑
+max_features ↓ / tune
+max_samples ↓ / tune
+```
+
+Also investigate:
+
+- Noise
+- Leakage
+- Insufficient data
+- Distribution differences
+
+### High Bias / Underfitting
+
+```text
+Training score   → poor
+Validation score → similarly poor
+```
+
+Possible changes:
+
+```text
+max_depth ↑
+min_samples_leaf ↓
+min_samples_split ↓
+```
+
+Also investigate:
+
+- Weak/missing features
+- Excessive regularization
+- Feature engineering
+- Whether RF is appropriate for the problem
+
+### `n_estimators`
+
+Increase trees until validation/OOB performance becomes stable.
+
+More trees generally:
+
+```text
+Variance stability ↑
+Training cost ↑
+Inference cost ↑
+Memory ↑
+```
+
+Eventually there are diminishing returns.
+
+---
+
+# Hyperparameter Search
+
+## Grid Search
+
+Tests predefined combinations exhaustively.
+
+Useful when:
+
+- Search space is small
+- Important parameter ranges are already known
+
+Problem:
+
+```text
+Many parameters × many values
+→ combinations explode
+```
+
+## Randomized Search
+
+Samples random hyperparameter combinations.
+
+Useful when:
+
+- Search space is large
+- Some parameters matter much more than others
+- Compute budget is limited
+
+For large search spaces, Randomized Search is often a better starting point than exhaustive Grid Search.
+
+Use cross-validation where appropriate rather than selecting parameters from test-set performance.
+
+The test set should remain untouched until final evaluation.
+
+---
+
+# Random Forest Preprocessing
+
+## Feature Scaling
+
+Usually NOT required.
+
+Decision Trees make rules such as:
+
+```text
+Age < 30
+Salary > 50000
+```
+
+Changing scale:
+
+```text
+Salary = 50000
+→ standardized Salary = 0.72
+```
+
+does not fundamentally change the ordering used by threshold splits.
+
+Therefore RF generally does not require:
+
+```text
+StandardScaler
+MinMaxScaler
+```
+
+unlike distance/gradient-sensitive models where scaling may matter substantially.
+
+---
+
+## Categorical Features
+
+Handling depends on the implementation.
+
+With scikit-learn workflows, categorical variables are commonly encoded before fitting Random Forest.
+
+Possible techniques include:
+
+```text
+One-Hot Encoding
+Ordinal Encoding — only when appropriate
+```
+
+Avoid accidentally introducing fake ordinal meaning into nominal categories.
+
+---
+
+## High-Cardinality Features
+
+Be careful with:
+
+```text
+CustomerID
+PassengerId
+UUID
+TransactionID
+```
+
+They may encourage memorization or meaningless splits.
+
+Ask:
+
+> Does this feature contain generalizable predictive information?
+
+---
+
+# Production Considerations
+
+## Model Size
+
+More trees mean:
+
+```text
+Memory ↑
+Model artifact size ↑
+```
+
+A forest with thousands of deep trees can become large.
+
+## Inference Latency
+
+Prediction requires traversing many trees:
+
+```text
+New observation
+      ↓
+Tree 1
+Tree 2
+...
+Tree N
+      ↓
+Aggregate
+```
+
+Therefore:
+
+```text
+n_estimators ↑
+→ inference cost ↑
+```
+
+Balance accuracy/stability against latency requirements.
+
+## Parallelism
+
+Trees can largely be trained independently.
+
+In scikit-learn:
+
+```python
+n_jobs=-1
+```
+
+can use available CPU cores for parallel computation.
+
+## Reproducibility
+
+Use:
+
+```python
+random_state=42
+```
+
+or another fixed seed for reproducible experiments.
+
+The value `42` itself has no ML significance.
+
+## Data Drift
+
+Production data can change over time.
+
+Monitor:
+
+```text
+Input feature distributions
+Prediction distributions
+Performance when labels become available
+Class balance
+Missing-value patterns
+```
+
+A strong historical validation score does not guarantee permanent production performance.
+
+---
+
+# Interpretability
+
+### Global Feature Importance
+
+Answers:
+
+> Which features does the model generally rely on?
+
+Tools:
+
+```text
+MDI
+Permutation Importance
+```
+
+### Local Explanation
+
+Answers:
+
+> Why did the model make THIS particular prediction?
+
+Tools such as:
+
+```text
+SHAP
+```
+
+can be used for local/global model explanations.
+
+SHAP should be treated as an explanation of model behavior, NOT proof of causal relationships.
+
+Partial Dependence Plots (PDP) can help inspect how predictions change as a feature changes on average, but correlated features can make interpretation unreliable.
+
+---
+
+# Random Forest — 2+ Year ML Engineer Checklist
+
+You should be comfortable explaining:
+
+- Why a single Decision Tree has high variance
+- Bootstrap sampling
+- Bagging
+- Random feature selection
+- Why tree correlation matters
+- Gini/impurity-based splitting
+- Classification vs regression aggregation
+- OOB samples and OOB evaluation
+- Why approximately 36.8% of observations are OOB
+- Bias vs variance
+- Forest variance intuition:
+
+\[
+Var(RF)
+\approx
+\rho\sigma^2+
+\frac{(1-\rho)\sigma^2}{N}
+\]
+
+- Important hyperparameters and their trade-offs
+- Train vs validation/OOB diagnosis
+- MDI feature importance
+- Permutation importance
+- Correlated-feature importance problems
+- Why feature importance does not imply causality
+- Why scaling is generally unnecessary
+- Class imbalance handling
+- Leakage risks
+- Model size and inference latency
+- Reproducibility and data drift
+
+At this point, Random Forest is sufficiently covered for a practical ~2-year ML-engineer level.
