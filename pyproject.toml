@@ -1,7 +1,7 @@
 [project]
 name = "machinelearning"
 version = "0.1.0"
-description = "Add your description here"
+description = "First-principles machine learning tutorials and experiments"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

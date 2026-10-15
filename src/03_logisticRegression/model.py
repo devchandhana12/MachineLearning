@@ -3,6 +3,8 @@
 #              TELCO CUSTOMER CHURN
 # ============================================================
 
+from pathlib import Path
+
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
@@ -26,7 +28,9 @@ from sklearn.metrics import (
 # LOAD DATA
 # ============================================================
 
-df = pd.read_csv("data/telecomChurn.csv")
+df = pd.read_csv(
+    Path(__file__).resolve().parent / "data" / "telecomChurn.csv"
+)
 
 
 # ============================================================

@@ -1,5 +1,7 @@
-import pandas as pd
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
@@ -16,7 +18,9 @@ from sklearn.impute import SimpleImputer
 # LOAD DATA
 # ============================================================
 
-df = pd.read_csv("train.csv")
+df = pd.read_csv(
+    Path(__file__).resolve().parent / "data" / "house_prices_train.csv"
+)
 
 
 # ============================================================

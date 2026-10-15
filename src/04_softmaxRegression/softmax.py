@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import pandas as pd
 
-df = pd.read_csv('data/iris.csv')
+DATA_PATH = Path(__file__).resolve().parent / "data" / "Iris.csv"
+df = pd.read_csv(DATA_PATH)
 
 
 # # print the first 5 rows of the dataframe
